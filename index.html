@@ -11,7 +11,7 @@
       padding: 0;
       background: linear-gradient(135deg, #1f1f1f, #2a2a2a);
       color: #ffffff;
-      font-family: 'Rubik', sans-serif;
+      font-family: 'Rubik', Arial, sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -23,13 +23,13 @@
     }
 
     h1 {
-      font-size: 52px;
-      margin-bottom: 50px;
+      font-size: 42px;
+      margin-bottom: 40px;
     }
 
     button {
-      font-size: 40px;
-      padding: 30px 60px;
+      font-size: 32px;
+      padding: 22px 44px;
       background-color: #292929;
       color: #ffffff;
       border: none;
@@ -49,8 +49,8 @@
     }
 
     #result {
-      font-size: 44px;
-      margin-top: 60px;
+      font-size: 36px;
+      margin-top: 50px;
       font-weight: bold;
       opacity: 0;
       transform: scale(0.8);
@@ -64,7 +64,7 @@
 
     #history {
       margin-top: 40px;
-      font-size: 22px;
+      font-size: 18px;
       max-height: 150px;
       overflow-y: auto;
       width: 80%;
@@ -80,14 +80,18 @@
       margin-bottom: 10px;
       padding-bottom: 6px;
       border-bottom: 1px solid #444;
-      display: flex;
-      justify-content: space-between;
+      text-align: right;
+    }
+
+    #history h2 {
+      margin-bottom: 15px;
+      font-size: 22px;
     }
   </style>
 </head>
 <body>
   <h1>הגרלת וויד ליום</h1>
-  <button onclick="roll()">!הגרל</button>
+  <button onclick="roll()">הגרל</button>
   <div id="result"></div>
   <div id="history">
     <h2>היסטוריית תוצאות:</h2>
@@ -124,24 +128,24 @@
       return lastTwo.length === 2 && lastTwo[0].result.includes("כן") && lastTwo[1].result.includes("כן");
     }
 
-    function updateResult(text) {
-      resultEl.innerText = text;
-      resultEl.classList.add("show");
-    }
-
     function formatDate(dateStr) {
       const [year, month, day] = dateStr.split("-");
       return `${parseInt(day)}.${parseInt(month)}.${year}`;
     }
 
+    function updateResult(text) {
+      resultEl.innerText = text;
+      resultEl.classList.add("show");
+    }
+
     function updateHistory() {
-    const history = getHistory().slice(-10).reverse();
-    historyList.innerHTML = "";
-    history.forEach(item => {
-    const li = document.createElement("li");
-    const formattedDate = formatDate(item.date);
-    li.innerHTML = `<span>${formattedDate}</span><span>${item.result}</span>`;
-    historyList.appendChild(li);
+      const history = getHistory().slice(-10).reverse();
+      historyList.innerHTML = "";
+      history.forEach(item => {
+        const li = document.createElement("li");
+        const formattedDate = formatDate(item.date);
+        li.innerText = `${formattedDate}: ${item.result}`;
+        historyList.appendChild(li);
       });
     }
 
