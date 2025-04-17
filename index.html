@@ -1,59 +1,99 @@
-
 <!DOCTYPE html>
 <html lang="he">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הגרלת וויד יומית</title>
   <style>
-  body {
-    margin: 0;
-    padding: 0;
-    background-color: #121212;
-    color: #ffffff;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-align: center;
-  }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #1f1f1f, #2a2a2a);
+      color: #ffffff;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      width: 100vw;
+      text-align: center;
+      overflow-x: hidden;
+    }
 
-  h1 {
-    font-size: 36px;
-    margin-bottom: 30px;
-  }
+    h1 {
+      font-size: 52px;
+      margin-bottom: 50px;
+    }
 
-  button {
-    font-size: 28px;
-    padding: 15px 30px;
-    background-color: #1f1f1f;
-    color: #ffffff;
-    border: 2px solid #ffffff;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
+    button {
+      font-size: 40px;
+      padding: 30px 60px;
+      background-color: #292929;
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transition: transform 0.2s, background-color 0.3s;
+    }
 
-  button:hover {
-    background-color: #333333;
-  }
+    button:hover {
+      background-color: #3a3a3a;
+      transform: scale(1.03);
+    }
 
-  #result {
-    font-size: 30px;
-    margin-top: 40px;
-    font-weight: bold;
-  }
-</style>
+    button:active {
+      transform: scale(0.97);
+    }
+
+    #result {
+      font-size: 44px;
+      margin-top: 60px;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: all 0.4s ease;
+    }
+
+    #result.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #history {
+      margin-top: 40px;
+      font-size: 20px;
+      max-height: 120px;
+      overflow-y: auto;
+      width: 80%;
+    }
+
+    #history ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #history li {
+      margin-bottom: 6px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 4px;
+    }
+  </style>
 </head>
 <body>
   <h1>הגרלת וויד ליום</h1>
   <button onclick="roll()">הגרל!</button>
   <div id="result"></div>
+  <div id="history">
+    <h2>היסטוריית תוצאות:</h2>
+    <ul id="historyList"></ul>
+  </div>
 
   <script>
     const today = new Date().toISOString().split('T')[0];
     const resultEl = document.getElementById("result");
+    const historyList = document.getElementById("historyList");
 
     function getHistory() {
       const history = localStorage.getItem("weed_history");
@@ -77,34 +117,50 @@
     function checkLastTwoDays() {
       const history = getHistory();
       const lastTwo = history.slice(-2);
-      return lastTwo.length === 2 && lastTwo[0].result === "כן לעשן" && lastTwo[1].result === "כן לעשן";
+      return lastTwo.length === 2 && lastTwo[0].result.includes("כן") && lastTwo[1].result.includes("כן");
+    }
+
+    function updateResult(text) {
+      resultEl.innerText = text;
+      resultEl.classList.add("show");
+    }
+
+    function updateHistory() {
+      const history = getHistory().slice(-10).reverse();
+      historyList.innerHTML = "";
+      history.forEach(item => {
+        const li = document.createElement("li");
+        li.innerText = `${item.date}: ${item.result}`;
+        historyList.appendChild(li);
+      });
     }
 
     function roll() {
       const existing = getTodayResult();
       if (existing) {
-        resultEl.innerText = "כבר הגרלת היום: " + existing;
+        updateResult("כבר הגרלת היום: " + existing);
         return;
       }
 
+      let result;
       if (checkLastTwoDays()) {
-        saveResult(today, "לא לעשן (יום מנוחה)");
-        resultEl.innerText = "יום מנוחה – לא לעשן (שני ימים רצופים של עישון)";
-        return;
+        result = "לא לעשן (יום מנוחה)";
+      } else {
+        result = Math.random() < 0.5 ? "כן לעשן" : "לא לעשן";
       }
 
-      const result = Math.random() < 0.5 ? "כן לעשן" : "לא לעשן";
       saveResult(today, result);
-      resultEl.innerText = "ההגרלה להיום: " + result;
+      updateResult("ההגרלה להיום: " + result);
+      updateHistory();
     }
 
-    // הצג תוצאה קיימת אם יש
     window.onload = () => {
       const existing = getTodayResult();
       if (existing) {
-        resultEl.innerText = "ההגרלה להיום: " + existing;
+        updateResult("ההגרלה להיום: " + existing);
       }
-    };
+      updateHistory();
+    }
   </script>
 </body>
 </html>
