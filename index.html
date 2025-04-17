@@ -4,13 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הגרלת וויד יומית</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0;
       padding: 0;
       background: linear-gradient(135deg, #1f1f1f, #2a2a2a);
       color: #ffffff;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Rubik', sans-serif;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -63,10 +64,11 @@
 
     #history {
       margin-top: 40px;
-      font-size: 20px;
-      max-height: 120px;
+      font-size: 22px;
+      max-height: 150px;
       overflow-y: auto;
       width: 80%;
+      direction: rtl;
     }
 
     #history ul {
@@ -75,9 +77,11 @@
     }
 
     #history li {
-      margin-bottom: 6px;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
       border-bottom: 1px solid #444;
-      padding-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
     }
   </style>
 </head>
