@@ -1,0 +1,86 @@
+
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <title>הגרלת וויד יומית</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+      background-color: #f0f0f0;
+    }
+    button {
+      font-size: 20px;
+      padding: 10px 20px;
+    }
+    #result {
+      font-size: 24px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>הגרלת וויד ליום</h1>
+  <button onclick="roll()">הגרל!</button>
+  <div id="result"></div>
+
+  <script>
+    const today = new Date().toISOString().split('T')[0];
+    const resultEl = document.getElementById("result");
+
+    function getHistory() {
+      const history = localStorage.getItem("weed_history");
+      return history ? JSON.parse(history) : [];
+    }
+
+    function saveResult(date, result) {
+      const history = getHistory();
+      history.push({ date, result });
+      localStorage.setItem("weed_history", JSON.stringify(history));
+      localStorage.setItem("weed_today", JSON.stringify({ date, result }));
+    }
+
+    function getTodayResult() {
+      const data = localStorage.getItem("weed_today");
+      if (!data) return null;
+      const obj = JSON.parse(data);
+      return obj.date === today ? obj.result : null;
+    }
+
+    function checkLastTwoDays() {
+      const history = getHistory();
+      const lastTwo = history.slice(-2);
+      return lastTwo.length === 2 && lastTwo[0].result === "כן לעשן" && lastTwo[1].result === "כן לעשן";
+    }
+
+    function roll() {
+      const existing = getTodayResult();
+      if (existing) {
+        resultEl.innerText = "כבר הגרלת היום: " + existing;
+        return;
+      }
+
+      if (checkLastTwoDays()) {
+        saveResult(today, "לא לעשן (יום מנוחה)");
+        resultEl.innerText = "יום מנוחה – לא לעשן (שני ימים רצופים של עישון)";
+        return;
+      }
+
+      const result = Math.random() < 0.5 ? "כן לעשן" : "לא לעשן";
+      saveResult(today, result);
+      resultEl.innerText = "ההגרלה להיום: " + result;
+    }
+
+    // הצג תוצאה קיימת אם יש
+    window.onload = () => {
+      const existing = getTodayResult();
+      if (existing) {
+        resultEl.innerText = "ההגרלה להיום: " + existing;
+      }
+    };
+  </script>
+</body>
+</html>
