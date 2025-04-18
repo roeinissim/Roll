@@ -99,7 +99,7 @@
   </div>
 
   <script>
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('he-IL').split('.').reverse().join('-');
     const resultEl = document.getElementById("result");
     const historyList = document.getElementById("historyList");
 
