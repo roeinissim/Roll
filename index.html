@@ -21,72 +21,34 @@
       text-align: center;
       overflow-x: hidden;
     }
-
-    h1 {
-      font-size: 42px;
-      margin-bottom: 40px;
-    }
-
+    h1 { font-size: 42px; margin-bottom: 40px; }
     button {
-      font-size: 32px;
-      padding: 22px 44px;
-      background-color: #292929;
-      color: #ffffff;
-      border: none;
-      border-radius: 20px;
+      font-size: 32px; padding: 22px 44px;
+      background-color: #292929; color: #ffffff;
+      border: none; border-radius: 20px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       transition: transform 0.2s, background-color 0.3s;
     }
-
-    button:hover {
-      background-color: #3a3a3a;
-      transform: scale(1.03);
-    }
-
-    button:active {
-      transform: scale(0.97);
-    }
-
+    button:hover { background-color: #3a3a3a; transform: scale(1.03); }
+    button:active { transform: scale(0.97); }
     #result {
-      font-size: 36px;
-      margin-top: 50px;
-      font-weight: bold;
-      opacity: 0;
-      transform: scale(0.8);
+      font-size: 36px; margin-top: 50px; font-weight: bold;
+      opacity: 0; transform: scale(0.8);
       transition: all 0.4s ease;
     }
-
-    #result.show {
-      opacity: 1;
-      transform: scale(1);
-    }
-
+    #result.show { opacity: 1; transform: scale(1); }
     #history {
-      margin-top: 40px;
-      font-size: 18px;
-      max-height: 150px;
-      overflow-y: auto;
-      width: 80%;
-      direction: rtl;
+      margin-top: 40px; font-size: 18px;
+      max-height: 150px; overflow-y: auto;
+      width: 80%; direction: rtl;
     }
-
-    #history ul {
-      list-style: none;
-      padding: 0;
-    }
-
+    #history ul { list-style: none; padding: 0; }
     #history li {
-      margin-bottom: 10px;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #444;
-      text-align: right;
+      margin-bottom: 10px; padding-bottom: 6px;
+      border-bottom: 1px solid #444; text-align: right;
     }
-
-    #history h2 {
-      margin-bottom: 15px;
-      font-size: 22px;
-    }
+    #history h2 { margin-bottom: 15px; font-size: 22px; }
   </style>
 </head>
 <body>
@@ -122,10 +84,9 @@
       return obj.date === today ? obj.result : null;
     }
 
-    function checkLastTwoDays() {
-      const history = getHistory();
+    function checkLastTwo(history, value) {
       const lastTwo = history.slice(-2);
-      return lastTwo.length === 2 && lastTwo[0].result.includes("כן") && lastTwo[1].result.includes("כן");
+      return lastTwo.length === 2 && lastTwo[0].result.includes(value) && lastTwo[1].result.includes(value);
     }
 
     function formatDate(dateStr) {
@@ -142,8 +103,8 @@
       const history = getHistory().slice(-10).reverse();
       historyList.innerHTML = "";
       history.forEach(item => {
-        const li = document.createElement("li");
         const formattedDate = formatDate(item.date);
+        const li = document.createElement("li");
         li.innerText = `${formattedDate}: ${item.result}`;
         historyList.appendChild(li);
       });
@@ -156,9 +117,13 @@
         return;
       }
 
-      let result;
-      if (checkLastTwoDays()) {
-        result = "לא לעשן (יום מנוחה)";
+      const history = getHistory();
+      let result = "";
+
+      if (checkLastTwo(history, 'לא')) {
+        result = "כן לעשן (איזון)";
+      } else if (checkLastTwo(history, 'כן')) {
+        result = "לא לעשן (מנוחה)";
       } else {
         result = Math.random() < 0.5 ? "כן לעשן" : "לא לעשן";
       }
