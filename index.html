@@ -21,43 +21,95 @@
       text-align: center;
       overflow-x: hidden;
     }
-    h1 { font-size: 42px; margin-bottom: 40px; }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 40px;
+    }
+
     button {
-      font-size: 32px; padding: 22px 44px;
-      background-color: #292929; color: #ffffff;
-      border: none; border-radius: 20px;
+      font-size: 32px;
+      padding: 22px 44px;
+      background-color: #292929;
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       transition: transform 0.2s, background-color 0.3s;
     }
-    button:hover { background-color: #3a3a3a; transform: scale(1.03); }
-    button:active { transform: scale(0.97); }
+
+    button:hover {
+      background-color: #3a3a3a;
+      transform: scale(1.03);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
     #result {
-      font-size: 36px; margin-top: 50px; font-weight: bold;
-      opacity: 0; transform: scale(0.8);
+      font-size: 36px;
+      margin-top: 50px;
+      font-weight: bold;
+      opacity: 0;
+      transform: scale(0.8);
       transition: all 0.4s ease;
     }
-    #result.show { opacity: 1; transform: scale(1); }
+
+    #result.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
     #history {
-      margin-top: 40px; font-size: 18px;
-      max-height: 150px; overflow-y: auto;
-      width: 80%; direction: rtl;
+      margin-top: 40px;
+      font-size: 18px;
+      max-height: 150px;
+      overflow-y: auto;
+      width: 80%;
+      direction: rtl;
     }
-    #history ul { list-style: none; padding: 0; }
+
+    #history ul {
+      list-style: none;
+      padding: 0;
+    }
+
     #history li {
-      margin-bottom: 10px; padding-bottom: 6px;
-      border-bottom: 1px solid #444; text-align: right;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #444;
+      text-align: right;
     }
-    #history h2 { margin-bottom: 15px; font-size: 22px; }
+
+    #history h2 {
+      margin-bottom: 15px;
+      font-size: 22px;
+    }
+
+    #stats {
+      margin-top: 30px;
+      font-size: 18px;
+      width: 80%;
+      direction: rtl;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
   <h1>הגרלת וויד ליום</h1>
   <button onclick="roll()">הגרל</button>
   <div id="result"></div>
+
   <div id="history">
     <h2>היסטוריית תוצאות:</h2>
     <ul id="historyList"></ul>
+  </div>
+
+  <div id="stats">
+    <h2>סטטיסטיקה שבועית:</h2>
+    <p id="statsText"></p>
   </div>
 
   <script>
@@ -100,14 +152,29 @@
     }
 
     function updateHistory() {
-      const history = getHistory().slice(-10).reverse();
+      const fullHistory = getHistory();
+      const history = fullHistory.slice(-10).reverse();
       historyList.innerHTML = "";
+
       history.forEach(item => {
         const formattedDate = formatDate(item.date);
         const li = document.createElement("li");
         li.innerText = `${formattedDate}: ${item.result}`;
         historyList.appendChild(li);
       });
+
+      // סטטיסטיקה שבועית
+      const last7 = fullHistory.slice(-7);
+      let yes = 0, no = 0, forced = 0;
+
+      last7.forEach(entry => {
+        if (entry.result.includes("כן")) yes++;
+        if (entry.result.includes("לא")) no++;
+        if (entry.result.includes("איזון") || entry.result.includes("מנוחה")) forced++;
+      });
+
+      document.getElementById("statsText").innerText =
+        `סה"כ בשבוע האחרון: ${yes} ימי עישון, ${no} ימי לא, מתוכם ${forced} היו כפויים (איזון/מנוחה).`;
     }
 
     function roll() {
