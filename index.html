@@ -1,12 +1,13 @@
 
 <!DOCTYPE html>
-<html lang="he" dir="rtl">
+
+<html dir="rtl" lang="he">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>הגרלה יומית</title>
-  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>הגרלה יומית</title>
+<link href="https://fonts.googleapis.com/css2?family=Secular+One&amp;display=swap" rel="stylesheet"/>
+<style>
     body {
       margin: 0;
       font-family: 'Secular One', sans-serif;
@@ -73,42 +74,42 @@
       border-bottom: 1px solid #444;
       padding: 6px 0;
     }
-  </style>
+  
+.card h2 {
+  margin-bottom: 6px !important;
+}
+</style>
 </head>
 <body>
-  <h1>שלום רועי!</h1>
+<h1>שלום רועי!</h1>
+<div class="card">
+<p>היום יצא: <span id="today-result">---</span></p>
+<button onclick="performDraw()">בצע הגרלה</button>
+<button onclick="markFollowed()">עמדתי בהחלטה</button>
+<p id="follow-status"></p>
+</div>
+<div class="card">
+<h2>היסטוריה</h2>
+<ul id="history-list"></ul>
+</div><div class="card">
+<h2>סטטיסטיקות</h2>
+<div id="stats-content"></div>
+</div>
 
-  <div class="card">
-    <p>היום יצא: <span id="today-result">---</span></p>
-    <button onclick="performDraw()">בצע הגרלה</button>
-    <button onclick="markFollowed()">עמדתי בהחלטה</button>
-    <p id="follow-status"></p>
-  </div>
-
-  <div class="card">
-    <h2>סטטיסטיקות</h2>
-    <div id="stats-content"></div>
-  </div>
-
-  <div class="card">
-    <h2>היסטוריה</h2>
-    <ul id="history-list"></ul>
-  </div>
-
-  <div class="card">
-    <h2>הגדרות</h2>
-    <label>בחר סוג שבוע התחלתי:</label>
-    <select id="week-type">
-      <option value="בית">בית</option>
-      <option value="בסיס">בסיס</option>
-    </select>
-    <label>בחר תאריך התחלה:</label>
-    <input type="date" id="start-date" />
-    <label>בחר שעת תזכורת:</label>
-    <input type="time" id="reminder-time" />
-    <button onclick="saveSettings()">שמור הגדרות</button>
-<br><br>
-<button onclick="confirmReset()" style="background-color: #cc4444;">איפוס כל הנתונים</button>
+<div class="card">
+<h2>הגדרות</h2>
+<label>בחר סוג שבוע התחלתי:</label>
+<select id="week-type">
+<option value="בית">בית</option>
+<option value="בסיס">בסיס</option>
+</select>
+<label>בחר תאריך התחלה:</label>
+<input id="start-date" type="date"/>
+<label>בחר שעת תזכורת:</label>
+<input id="reminder-time" type="time"/>
+<button onclick="saveSettings()">שמור הגדרות</button>
+<br/><br/>
+<button onclick="confirmReset()" style="background-color: #cc4444;; margin-top: 10px">איפוס כל הנתונים</button>
 <script>
 function confirmReset() {
   if (confirm("האם אתה בטוח שאתה רוצה לאפס את כל הנתונים? פעולה זו בלתי הפיכה.")) {
@@ -117,9 +118,7 @@ function confirmReset() {
   }
 }
 </script>
-
-  </div>
-
+</div>
 <script>
   const historyKey = "draw_history";
   const settingsKey = "draw_settings";
