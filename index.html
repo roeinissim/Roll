@@ -5,170 +5,196 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>הגרלה יומית</title>
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #1c1c1c, #2e2e2e);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      min-height: 100vh;
-      padding-top: 40px;
+      font-family: 'Secular One', sans-serif;
+      background: url('A_digital_illustration_features_an_abstract_backgr.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #f0f0f0;
+      padding: 40px 10px;
     }
+
+    * {
+      font-family: 'Secular One', sans-serif !important;
+      font-weight: normal !important;
+    }
+
     h1 {
-      font-size: 40px;
-      margin-bottom: 30px;
+      font-size: 34px;
+      margin-bottom: 25px;
+      color: #ffffff;
     }
-    button {
-      background-color: #0077ff;
-      color: white;
+
+    .card {
+      background-color: rgba(0, 0, 0, 0.75);
+      padding: 24px;
+      border-radius: 12px;
+      margin: 20px auto;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+
+    button, input[type="time"], input[type="date"], select {
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
       border: none;
-      padding: 16px 36px;
-      font-size: 20px;
-      border-radius: 12px;
+      border-radius: 8px;
+      width: 100%;
+      max-width: 400px;
+      background-color: #2f81f7;
+      color: white;
       cursor: pointer;
-      margin-bottom: 25px;
-      transition: background-color 0.3s, transform 0.2s;
     }
+
     button:hover {
-      background-color: #005dd1;
-      transform: scale(1.05);
+      background-color: #1f6feb;
     }
-    #result {
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 20px;
+
+    label, p, h2 {
+      font-weight: normal;
+      font-size: 18px;
     }
-    #history, #stats {
-      width: 90%;
-      max-width: 500px;
-      background-color: #292929;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 25px;
-      text-align: right;
-    }
-    h2 {
+
+    #today-result {
       font-size: 22px;
-      margin-bottom: 10px;
+      margin: 15px 0;
     }
+
     ul {
       list-style: none;
       padding: 0;
+      margin: 0;
     }
+
     li {
-      padding: 6px 0;
       border-bottom: 1px solid #444;
-    }
-    input[type="date"] {
-      padding: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 25px;
+      padding: 6px 0;
     }
   </style>
 </head>
 <body>
-  <h1>הגרלה יומית</h1>
-  <label for="start-date">בחר תאריך התחלה של שבוע בית:</label><br>
-  <input type="date" id="start-date" onchange="saveStartDate()" /><br>
-  <button onclick="performDraw()">בצע הגרלה</button>
-  <div id="result"></div>
-  <div id="history">
-    <h2>היסטוריה</h2>
-    <ul id="history-list"></ul>
+  <h1>שלום רועי!</h1>
+
+  <div class="card">
+    <p>היום יצא: <span id="today-result">---</span></p>
+    <button onclick="performDraw()">בצע הגרלה</button>
+    <button onclick="markFollowed()">עמדתי בהחלטה</button>
+    <p id="follow-status"></p>
   </div>
-  <div id="stats">
+
+  <div class="card">
     <h2>סטטיסטיקות</h2>
     <div id="stats-content"></div>
   </div>
 
+  <div class="card">
+    <h2>היסטוריה</h2>
+    <ul id="history-list"></ul>
+  </div>
+
+  <div class="card">
+    <h2>הגדרות</h2>
+    <label>בחר סוג שבוע התחלתי:</label>
+    <select id="week-type">
+      <option value="בית">בית</option>
+      <option value="בסיס">בסיס</option>
+    </select>
+    <label>בחר תאריך התחלה:</label>
+    <input type="date" id="start-date" />
+    <label>בחר שעת תזכורת:</label>
+    <input type="time" id="reminder-time" />
+    <button onclick="saveSettings()">שמור הגדרות</button>
+  </div>
+
 <script>
   const historyKey = "draw_history";
-  const startDateKey = "start_date";
+  const settingsKey = "draw_settings";
 
-  function saveStartDate() {
-    const date = document.getElementById("start-date").value;
-    if (date) {
-      localStorage.setItem(startDateKey, date);
-      updateUI();
-    }
+  function getToday() {
+    return new Date().toISOString().split("T")[0];
   }
 
-  function getCurrentWeekType() {
-    const savedDate = localStorage.getItem(startDateKey);
-    if (!savedDate) return "לא נבחר";
-    const start = new Date(savedDate);
+  function saveSettings() {
+    const settings = {
+      startDate: document.getElementById("start-date").value,
+      weekType: document.getElementById("week-type").value,
+      reminder: document.getElementById("reminder-time").value
+    };
+    localStorage.setItem(settingsKey, JSON.stringify(settings));
+    alert("ההגדרות נשמרו!");
+  }
+
+  function getWeekType() {
+    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+    if (!s.startDate || !s.weekType) return "לא ידוע";
+    const start = new Date(s.startDate);
     const now = new Date();
-    const daysPassed = Math.floor((now - start) / (1000 * 60 * 60 * 24));
-    return Math.floor(daysPassed / 7) % 2 === 0 ? "בית" : "בסיס";
+    const days = Math.floor((now - start) / (1000*60*60*24));
+    const weekShift = Math.floor(days / 7);
+    return (s.weekType === "בית") === (weekShift % 2 === 0) ? "בית" : "בסיס";
   }
 
   function performDraw() {
-    const today = new Date().toISOString().split('T')[0];
-    let history = [];
-    try {
-      history = JSON.parse(localStorage.getItem(historyKey)) || [];
-    } catch (e) {
-      console.error("שגיאה בקריאת ההיסטוריה", e);
+    const today = getToday();
+    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+    if (history.find(d => d.date === today)) {
+      updateUI();
+      return;
     }
-
-    const lastTwo = history.slice(-2).map(e => e.result);
-    const isTwoNo = lastTwo.filter(x => x === "לא" || x === "מנוחה").length === 2;
-
-    const currentWeek = getCurrentWeekType();
-    const startDate = localStorage.getItem(startDateKey);
-    const now = new Date();
-    let isFirstDayOfWeek = false;
-
-    if (startDate) {
-      const start = new Date(startDate);
-      isFirstDayOfWeek = Math.floor((now - start) / (1000 * 60 * 60 * 24)) % 7 === 0;
-    }
-
     let result = "לא";
-    if (isFirstDayOfWeek && currentWeek === "בית") {
-      result = "כן";
-    } else if (isTwoNo) {
-      result = "כן";
+    const lastTwo = history.slice(-2).map(d => d.result);
+    if (lastTwo.filter(r => r === "לא" || r === "מנוחה").length === 2) result = "כן";
+    else if (getWeekType() === "בית") {
+      const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+      if (s.startDate) {
+        const daysSince = Math.floor((new Date() - new Date(s.startDate)) / (1000*60*60*24));
+        if (daysSince % 7 === 0) result = "כן";
+      }
     } else {
       result = Math.random() < 0.5 ? "כן" : "לא";
     }
-
-    history.push({ date: today, result });
+    history.push({ date: today, result, followed: null });
     localStorage.setItem(historyKey, JSON.stringify(history));
     updateUI();
   }
 
-  function updateUI() {
-    let history = [];
-    try {
-      history = JSON.parse(localStorage.getItem(historyKey)) || [];
-    } catch (e) {
-      console.error("שגיאה בהיסטוריה", e);
+  function markFollowed() {
+    const today = getToday();
+    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+    const todayEntry = history.find(d => d.date === today);
+    if (todayEntry) {
+      todayEntry.followed = true;
+      localStorage.setItem(historyKey, JSON.stringify(history));
+      updateUI();
     }
+  }
 
+  function updateUI() {
+    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+    const today = getToday();
+    const todayEntry = history.find(d => d.date === today);
+    document.getElementById("today-result").textContent = todayEntry ? todayEntry.result : "---";
+    document.getElementById("follow-status").textContent = todayEntry?.followed ? "כל הכבוד רועי על המשמעת!" : "";
+    
     const list = document.getElementById("history-list");
     list.innerHTML = "";
-    history.slice().reverse().forEach(entry => {
+    history.slice().reverse().forEach(d => {
       const li = document.createElement("li");
-      li.textContent = `${formatDate(entry.date)}: ${entry.result}`;
+      li.textContent = `${formatDate(d.date)}: ${d.result}${d.followed ? " ✅" : ""}`;
       list.appendChild(li);
     });
 
-    const counts = { כן: 0, לא: 0, מנוחה: 0 };
-    history.forEach(e => counts[e.result] = (counts[e.result] || 0) + 1);
-    document.getElementById("stats-content").innerHTML = `
-      סה"כ כן: ${counts["כן"] || 0}<br>
-      סה"כ לא: ${counts["לא"] || 0}<br>
-      סה"כ מנוחה: ${counts["מנוחה"] || 0}<br>
-      השבוע הנוכחי: ${getCurrentWeekType()}
-    `;
+    const total = history.length;
+    const yes = history.filter(d => d.result === "כן").length;
+    const no = history.filter(d => d.result === "לא").length;
+    const followed = history.filter(d => d.followed).length;
+    const percent = total ? Math.round((followed / total) * 100) : 0;
+
+    document.getElementById("stats-content").innerHTML =
+      `סה"כ ימים: ${total}<br>סה"כ כן: ${yes}<br>סה"כ לא: ${no}<br>עמידה בהחלטות: ${followed}<br>אחוז עמידה: ${percent}%<br>שבוע נוכחי: ${getWeekType()}`;
   }
 
   function formatDate(iso) {
@@ -176,13 +202,13 @@
     return `${d}.${m}.${y}`;
   }
 
-  window.onload = () => {
-    const saved = localStorage.getItem(startDateKey);
-    if (saved) {
-      document.getElementById("start-date").value = saved;
-    }
+  window.onload = function() {
+    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+    if (s.startDate) document.getElementById("start-date").value = s.startDate;
+    if (s.weekType) document.getElementById("week-type").value = s.weekType;
+    if (s.reminder) document.getElementById("reminder-time").value = s.reminder;
     updateUI();
-  };
+  }
 </script>
 </body>
 </html>
