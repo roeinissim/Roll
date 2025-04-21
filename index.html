@@ -1,13 +1,12 @@
 
 <!DOCTYPE html>
-
-<html dir="rtl" lang="he">
+<html lang="he" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>הגרלה יומית</title>
-<link href="https://fonts.googleapis.com/css2?family=Secular+One&amp;display=swap" rel="stylesheet"/>
-<style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>הגרלה יומית</title>
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+  <style>
     body {
       margin: 0;
       font-family: 'Secular One', sans-serif;
@@ -57,6 +56,7 @@
     label, p, h2 {
       font-weight: normal;
       font-size: 18px;
+      margin-bottom: 6px;
     }
 
     #today-result {
@@ -74,57 +74,53 @@
       border-bottom: 1px solid #444;
       padding: 6px 0;
     }
-  
-.card h2 {
-  margin-bottom: 6px !important;
-}
-</style>
+  </style>
 </head>
 <body>
-<h1>שלום רועי!</h1>
-<div class="card">
-<p>היום יצא: <span id="today-result">---</span></p>
-<button onclick="performDraw()">בצע הגרלה</button>
-<button onclick="markFollowed()">עמדתי בהחלטה</button>
-<p id="follow-status"></p>
-</div>
-<div class="card">
-<h2>היסטוריה</h2>
-<ul id="history-list"></ul>
-</div><div class="card">
-<h2>סטטיסטיקות</h2>
-<div id="stats-content"></div>
-</div>
+  <h1>שלום רועי!</h1>
 
-<div class="card">
-<h2>הגדרות</h2>
-<label>בחר סוג שבוע התחלתי:</label>
-<select id="week-type">
-<option value="בית">בית</option>
-<option value="בסיס">בסיס</option>
-</select>
-<label>בחר תאריך התחלה:</label>
-<input id="start-date" type="date"/>
-<label>בחר שעת תזכורת:</label>
-<input id="reminder-time" type="time"/>
-<button onclick="saveSettings()">שמור הגדרות</button>
-<br/><br/>
-<button onclick="confirmReset()" style="background-color: #cc4444;; margin-top: 10px">איפוס כל הנתונים</button>
-<script>
-function confirmReset() {
-  if (confirm("האם אתה בטוח שאתה רוצה לאפס את כל הנתונים? פעולה זו בלתי הפיכה.")) {
-    localStorage.clear();
-    location.reload();
-  }
-}
-</script>
-</div>
+  <div class="card">
+    <p>היום יצא: <span id="today-result">---</span></p>
+    <button onclick="performDraw()">בצע הגרלה</button>
+    <button onclick="markFollowed()">עמדתי בהחלטה</button>
+    <p id="follow-status"></p>
+  </div>
+
+  <div class="card">
+    <h2>היסטוריה</h2>
+    <ul id="history-list"></ul>
+  </div>
+
+  <div class="card">
+    <h2>סטטיסטיקות</h2>
+    <div id="stats-content"></div>
+  </div>
+
+  <div class="card">
+    <h2>הגדרות</h2>
+    <label>בחר סוג שבוע התחלתי:</label>
+    <select id="week-type">
+      <option value="בית">בית</option>
+      <option value="בסיס">בסיס</option>
+    </select>
+    <label>בחר תאריך התחלה:</label>
+    <input type="date" id="start-date" />
+    <label>בחר שעת תזכורת:</label>
+    <input type="time" id="reminder-time" />
+    <button onclick="saveSettings()">שמור הגדרות</button>
+    <br><br>
+    <button onclick="confirmReset()" style="background-color: #cc4444; margin-top: 10px;">איפוס כל הנתונים</button>
+  </div>
+
 <script>
   const historyKey = "draw_history";
   const settingsKey = "draw_settings";
 
   function getToday() {
-    return new Date().toISOString().split("T")[0];
+    const now = new Date();
+    const offset = 21;
+    if (now.getHours() < offset) now.setDate(now.getDate() - 1);
+    return now.toISOString().split("T")[0];
   }
 
   function saveSettings() {
@@ -135,6 +131,13 @@ function confirmReset() {
     };
     localStorage.setItem(settingsKey, JSON.stringify(settings));
     alert("ההגדרות נשמרו!");
+  }
+
+  function confirmReset() {
+    if (confirm("האם אתה בטוח שאתה רוצה לאפס את כל הנתונים? פעולה זו בלתי הפיכה.")) {
+      localStorage.clear();
+      location.reload();
+    }
   }
 
   function getWeekType() {
@@ -188,7 +191,7 @@ function confirmReset() {
     const todayEntry = history.find(d => d.date === today);
     document.getElementById("today-result").textContent = todayEntry ? todayEntry.result : "---";
     document.getElementById("follow-status").textContent = todayEntry?.followed ? "כל הכבוד רועי על המשמעת!" : "";
-    
+
     const list = document.getElementById("history-list");
     list.innerHTML = "";
     history.slice().reverse().forEach(d => {
@@ -219,6 +222,27 @@ function confirmReset() {
     if (s.reminder) document.getElementById("reminder-time").value = s.reminder;
     updateUI();
   }
+
+  // בקשת הרשאה להתראות
+  if ('Notification' in window && Notification.permission !== 'granted') {
+    Notification.requestPermission();
+  }
+
+  // בדיקת תזכורת כל דקה
+  setInterval(() => {
+    const s = JSON.parse(localStorage.getItem("draw_settings") || "{}");
+    if (!s.reminder) return;
+    const now = new Date();
+    const [h, m] = s.reminder.split(":").map(Number);
+    if (now.getHours() === h && now.getMinutes() === m) {
+      const today = getToday();
+      const history = JSON.parse(localStorage.getItem("draw_history") || "[]");
+      const already = history.find(h => h.date === today);
+      if (!already && Notification.permission === "granted") {
+        new Notification("רועי, לא ביצעת הגרלה היום!");
+      }
+    }
+  }, 60000);
 </script>
 </body>
 </html>
