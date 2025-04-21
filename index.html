@@ -118,6 +118,7 @@
 
   function getToday() {
     const now = new Date();
+    now.setDate(now.getDate() - 1);
     const offset = 21;
     if (now.getHours() < offset) now.setDate(now.getDate() - 1);
     return now.toISOString().split("T")[0];
