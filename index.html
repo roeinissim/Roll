@@ -1,1 +1,188 @@
-...
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>הגרלה יומית</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1c1c1c, #2e2e2e);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      min-height: 100vh;
+      padding-top: 40px;
+    }
+    h1 {
+      font-size: 40px;
+      margin-bottom: 30px;
+    }
+    button {
+      background-color: #0077ff;
+      color: white;
+      border: none;
+      padding: 16px 36px;
+      font-size: 20px;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 25px;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background-color: #005dd1;
+      transform: scale(1.05);
+    }
+    #result {
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    #history, #stats {
+      width: 90%;
+      max-width: 500px;
+      background-color: #292929;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      text-align: right;
+    }
+    h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      padding: 6px 0;
+      border-bottom: 1px solid #444;
+    }
+    input[type="date"] {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 25px;
+    }
+  </style>
+</head>
+<body>
+  <h1>הגרלה יומית</h1>
+  <label for="start-date">בחר תאריך התחלה של שבוע בית:</label><br>
+  <input type="date" id="start-date" onchange="saveStartDate()" /><br>
+  <button onclick="performDraw()">בצע הגרלה</button>
+  <div id="result"></div>
+  <div id="history">
+    <h2>היסטוריה</h2>
+    <ul id="history-list"></ul>
+  </div>
+  <div id="stats">
+    <h2>סטטיסטיקות</h2>
+    <div id="stats-content"></div>
+  </div>
+
+<script>
+  const historyKey = "draw_history";
+  const startDateKey = "start_date";
+
+  function saveStartDate() {
+    const date = document.getElementById("start-date").value;
+    if (date) {
+      localStorage.setItem(startDateKey, date);
+      updateUI();
+    }
+  }
+
+  function getCurrentWeekType() {
+    const savedDate = localStorage.getItem(startDateKey);
+    if (!savedDate) return "לא נבחר";
+    const start = new Date(savedDate);
+    const now = new Date();
+    const daysPassed = Math.floor((now - start) / (1000 * 60 * 60 * 24));
+    return Math.floor(daysPassed / 7) % 2 === 0 ? "בית" : "בסיס";
+  }
+
+  function performDraw() {
+    const today = new Date().toISOString().split('T')[0];
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem(historyKey)) || [];
+    } catch (e) {
+      console.error("שגיאה בקריאת ההיסטוריה", e);
+    }
+
+    const lastTwo = history.slice(-2).map(e => e.result);
+    const isTwoNo = lastTwo.filter(x => x === "לא" || x === "מנוחה").length === 2;
+
+    const currentWeek = getCurrentWeekType();
+    const startDate = localStorage.getItem(startDateKey);
+    const now = new Date();
+    let isFirstDayOfWeek = false;
+
+    if (startDate) {
+      const start = new Date(startDate);
+      isFirstDayOfWeek = Math.floor((now - start) / (1000 * 60 * 60 * 24)) % 7 === 0;
+    }
+
+    let result = "לא";
+    if (isFirstDayOfWeek && currentWeek === "בית") {
+      result = "כן";
+    } else if (isTwoNo) {
+      result = "כן";
+    } else {
+      result = Math.random() < 0.5 ? "כן" : "לא";
+    }
+
+    history.push({ date: today, result });
+    localStorage.setItem(historyKey, JSON.stringify(history));
+    updateUI();
+  }
+
+  function updateUI() {
+    let history = [];
+    try {
+      history = JSON.parse(localStorage.getItem(historyKey)) || [];
+    } catch (e) {
+      console.error("שגיאה בהיסטוריה", e);
+    }
+
+    const list = document.getElementById("history-list");
+    list.innerHTML = "";
+    history.slice().reverse().forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = `${formatDate(entry.date)}: ${entry.result}`;
+      list.appendChild(li);
+    });
+
+    const counts = { כן: 0, לא: 0, מנוחה: 0 };
+    history.forEach(e => counts[e.result] = (counts[e.result] || 0) + 1);
+    document.getElementById("stats-content").innerHTML = `
+      סה"כ כן: ${counts["כן"] || 0}<br>
+      סה"כ לא: ${counts["לא"] || 0}<br>
+      סה"כ מנוחה: ${counts["מנוחה"] || 0}<br>
+      השבוע הנוכחי: ${getCurrentWeekType()}
+    `;
+  }
+
+  function formatDate(iso) {
+    const [y, m, d] = iso.split("-");
+    return `${d}.${m}.${y}`;
+  }
+
+  window.onload = () => {
+    const saved = localStorage.getItem(startDateKey);
+    if (saved) {
+      document.getElementById("start-date").value = saved;
+    }
+    updateUI();
+  };
+</script>
+</body>
+</html>
