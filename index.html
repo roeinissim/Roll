@@ -27,6 +27,20 @@
       margin-bottom: 25px;
       color: #262729;
     } 
+
+    .title-wrapper {
+  max-width: 600px;
+  margin: 0 auto; /* מרכז את הבלוק */
+  padding: 20px 10px;
+}
+
+.title-wrapper h1 {
+  font-size: 32px;
+  color: #ffffff; /* או כל צבע */
+  text-align: right; /* מיישר את הטקסט ימינה בתוך הבלוק */
+  margin: 0;
+}
+
     
     .card {
   background-color: rgba(32, 58, 74, 0.5); /* גוון רויאל כחול־ירוק שקוף */
@@ -88,7 +102,10 @@
   </style>
 </head>
 <body>
+  <div class="title-wrapper">
   <h1>שלום רועי!</h1>
+</div>
+
 
   <div class="card">
     <p>היום יצא: <span id="today-result">עדיין לא הוגרל</span></p>
