@@ -31,7 +31,7 @@
   background-color: rgba(255, 255, 255, 0.25); /* בהיר ועדין */
   padding: 16px;
   border-radius: 10px;
-  margin: 12px auto;
+  margin: 25px auto;
   max-width: 600px;
   box-shadow: 0 0 6px rgba(0,0,0,0.1);
   backdrop-filter: blur(8px); /* אפקט זכוכית */
@@ -43,7 +43,7 @@
       font-size: 16px;
       border: none;
       border-radius: 8px;
-      width: 100%;
+      width: 75%;
       max-width: 400px;
       background-color: #2f81f7;
       color: white;
@@ -58,6 +58,7 @@
       font-weight: normal;
       font-size: 18px;
       margin-bottom: 6px;
+      color: #262729;
     }
 
     #today-result {
@@ -81,7 +82,7 @@
   <h1>שלום רועי!</h1>
 
   <div class="card">
-    <p>היום יצא: <span id="today-result">---</span></p>
+    <p>היום יצא: <span id="today-result"> עדיין לא הוגרל </span></p>
     <button onclick="performDraw()">בצע הגרלה</button>
     <button onclick="markFollowed()">עמדתי בהחלטה</button>
     <p id="follow-status"></p>
