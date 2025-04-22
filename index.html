@@ -39,15 +39,16 @@
 
     button, input[type="time"], input[type="date"], select {
       padding: 12px;
-      margin: 10px 0;
+      margin: 10px auto;
       font-size: 16px;
       border: none;
       border-radius: 8px;
-      width: 75%;
+      width: 65%;
       max-width: 400px;
       background-color: #2f81f7;
       color: white;
       cursor: pointer;
+      display: block;
     }
 
     button:hover {
@@ -73,7 +74,7 @@
     }
 
     li {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid #262729;
       padding: 6px 0;
     }
   </style>
@@ -82,7 +83,7 @@
   <h1>שלום רועי!</h1>
 
   <div class="card">
-    <p>היום יצא: <span id="today-result"> עדיין לא הוגרל </span></p>
+    <p>היום יצא: <span id="today-result">עדיין לא הוגרל</span></p>
     <button onclick="performDraw()">בצע הגרלה</button>
     <button onclick="markFollowed()">עמדתי בהחלטה</button>
     <p id="follow-status"></p>
@@ -191,7 +192,7 @@
     const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
     const today = getToday();
     const todayEntry = history.find(d => d.date === today);
-    document.getElementById("today-result").textContent = todayEntry ? todayEntry.result : "---";
+    document.getElementById("today-result").textContent = todayEntry ? todayEntry.result : "עדיין לא הוגרל";
     document.getElementById("follow-status").textContent = todayEntry?.followed ? "כל הכבוד רועי על המשמעת!" : "";
 
     const list = document.getElementById("history-list");
