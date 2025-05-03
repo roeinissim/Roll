@@ -179,28 +179,43 @@
   }
 
   function performDraw() {
-    const today = getToday();
-    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-    if (history.find(d => d.date === today)) {
-      updateUI();
-      return;
-    }
-    let result = "לא";
-    const lastTwo = history.slice(-2).map(d => d.result);
-    if (lastTwo.filter(r => r === "לא" || r === "מנוחה").length === 2) result = "כן";
-    else if (getWeekType() === "בית") {
-      const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
-      if (s.startDate) {
-        const daysSince = Math.floor((new Date() - new Date(s.startDate)) / (1000*60*60*24));
-        if (daysSince % 7 === 0) result = "כן";
-      }
+  const today = getToday();
+  const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
+  if (history.find(d => d.date === today)) {
+    updateUI();
+    return;
+  }
+
+  let result;
+  const lastTwo = history.slice(-2).map(d => d.result);
+
+  // כלל 1: שני "לא" או "מנוחה" ברצף => חובה "כן"
+  if (lastTwo.every(r => r === "לא" || r === "מנוחה")) {
+    result = "כן";
+  }
+  // כלל 2: שני "כן" ברצף => חובה "לא"
+  else if (lastTwo.every(r => r === "כן")) {
+    result = "לא";
+  }
+  // כלל 3: תחילת שבוע בית => כן
+  else if (getWeekType() === "בית") {
+    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+    if (s.startDate) {
+      const daysSince = Math.floor((new Date() - new Date(s.startDate)) / (1000 * 60 * 60 * 24));
+      result = (daysSince % 7 === 0) ? "כן" : (Math.random() < 0.5 ? "כן" : "לא");
     } else {
       result = Math.random() < 0.5 ? "כן" : "לא";
     }
-    history.push({ date: today, result, followed: null });
-    localStorage.setItem(historyKey, JSON.stringify(history));
-    updateUI();
   }
+  // כלל 4: ברירת מחדל – 50/50
+  else {
+    result = Math.random() < 0.5 ? "כן" : "לא";
+  }
+
+  history.push({ date: today, result, followed: null });
+  localStorage.setItem(historyKey, JSON.stringify(history));
+  updateUI();
+}
 
   function markFollowed() {
     const today = getToday();
