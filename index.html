@@ -1,199 +1,203 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>השליטה של רועי</title>
-    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Secular One', sans-serif;
-            background: #1c1f26;
-            color: white;
-            text-align: center;
-            padding: 20px;
-        }
-        .card {
-            background-color: rgba(32, 64, 72, 0.5);
-            border-radius: 16px;
-            padding: 20px;
-            margin: 16px auto;
-            max-width: 600px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        button {
-            padding: 12px 24px;
-            font-size: 18px;
-            border-radius: 12px;
-            border: none;
-            background-color: #4ea3a3;
-            color: white;
-            cursor: pointer;
-        }
-        button:disabled {
-            background-color: #888;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>השליטה של רועי</title>
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Secular One', sans-serif;
+      background: #1c1f26;
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      background-color: rgba(32, 64, 72, 0.5);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px auto;
+      max-width: 600px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      border-radius: 12px;
+      border: none;
+      background-color: #4ea3a3;
+      color: white;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:disabled {
+      background-color: #888;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
-    <h1>שלום רועי!</h1>
-    <div class="card">
-        <p>האם היום אתה מעשן?</p>
-        <button id="yesBtn">כן, אני מעשן</button>
-        <button id="noBtn">לא, היום לא</button>
-    </div>
-    <div class="card">
-        <p id="summary"></p>
-        <p id="message"></p>
-    </div>
-    <div class="card">
-        <h3>היסטוריה שבועית</h3>
-        <div id="historyList"></div>
-    </div>
+  <h1>שלום רועי!</h1>
 
-    <script>
-        const usageKey = 'usage_history_v2';
+  <div class="card">
+    <p>האם היום אתה מעשן?</p>
+    <button id="yesBtn">כן, אני מעשן</button>
+    <button id="noBtn">לא, היום לא</button>
+  </div>
 
-        function getToday() {
-            const now = new Date();
-            return now.toISOString().split('T')[0];
+  <div class="card">
+    <p id="summary"></p>
+    <p id="message"></p>
+  </div>
+
+  <div class="card">
+    <h3>היסטוריה שבועית</h3>
+    <div id="historyList"></div>
+  </div>
+
+  <div class="card">
+    <h3>פירוט שבועי (גרף)</h3>
+    <canvas id="weeklyChart" width="400" height="200"></canvas>
+  </div>
+
+  <script>
+    let weeklyChartInstance = null;
+    const usageKey = 'usage_history_v2';
+
+    function getToday() {
+      const now = new Date();
+      return now.toISOString().split('T')[0];
+    }
+
+    function getWeekStart(dateStr) {
+      const date = new Date(dateStr);
+      const day = date.getDay();
+      date.setDate(date.getDate() - day);
+      return date.toISOString().split('T')[0];
+    }
+
+    function loadUsage() {
+      return JSON.parse(localStorage.getItem(usageKey) || '[]');
+    }
+
+    function saveUsage(history) {
+      localStorage.setItem(usageKey, JSON.stringify(history));
+    }
+
+    function updateUI() {
+      const today = getToday();
+      const history = loadUsage();
+      const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+
+      const totalYes = thisWeek.filter(e => e.result === "כן").length;
+      const todayEntry = history.find(e => e.date === today);
+
+      document.getElementById("summary").innerText = `השבוע עישנת ${totalYes} מתוך 4`;
+      document.getElementById("message").innerText = todayEntry ? `החלטת: ${todayEntry.result}` : '';
+
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+      thisWeek.slice().reverse().forEach(entry => {
+        const div = document.createElement('div');
+        div.innerText = `${entry.date} : ${entry.result}`;
+        historyList.appendChild(div);
+      });
+
+      document.getElementById("yesBtn").disabled = !!todayEntry;
+      document.getElementById("noBtn").disabled = !!todayEntry;
+    }
+
+    function addEntry(result) {
+      const today = getToday();
+      const history = loadUsage();
+
+      if (history.find(e => e.date === today)) return;
+
+      const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+      const totalYes = thisWeek.filter(e => e.result === "כן").length;
+      const lastTwo = thisWeek.slice(-2).map(e => e.result);
+
+      if (result === "כן") {
+        if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
+          alert("עברת את מגבלת השימוש השבועית או עישנת פעמיים רצוף. אי אפשר לעשן היום.");
+          return;
         }
+      }
 
-        function getWeekStart(dateStr) {
-            const date = new Date(dateStr);
-            const day = date.getDay(); // 0 = Sunday
-            date.setDate(date.getDate() - day);
-            return date.toISOString().split('T')[0];
-        }
+      history.push({ date: today, result });
+      saveUsage(history);
+      updateUI();
+      renderChart();
+    }
 
-        function loadUsage() {
-            return JSON.parse(localStorage.getItem(usageKey) || '[]');
-        }
+    function renderChart() {
+      if (weeklyChartInstance) weeklyChartInstance.destroy();
 
-        function saveUsage(history) {
-            localStorage.setItem(usageKey, JSON.stringify(history));
-        }
+      const history = loadUsage();
+      const today = new Date();
+      const labels = [];
+      const dataYes = [];
+      const dataNo = [];
 
-        function updateUI() {
-            const today = getToday();
-            const history = loadUsage();
-            const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(today.getDate() - i);
+        const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
+        const dateStr = d.toISOString().split('T')[0];
+        labels.push(label);
+        const entry = history.find(e => e.date === dateStr);
+        dataYes.push(entry && entry.result === "כן" ? 1 : 0);
+        dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+      }
 
-            const totalYes = thisWeek.filter(e => e.result === "כן").length;
-            const todayEntry = history.find(e => e.date === today);
-
-            document.getElementById("summary").innerText = `השבוע עישנת ${totalYes} מתוך 4`;
-            document.getElementById("message").innerText = todayEntry ? `החלטת: ${todayEntry.result}` : '';
-
-            const historyList = document.getElementById("historyList");
-            historyList.innerHTML = '';
-            thisWeek.slice().reverse().forEach(entry => {
-                const div = document.createElement('div');
-                div.innerText = `${entry.date} : ${entry.result}`;
-                historyList.appendChild(div);
-            });
-
-            document.getElementById("yesBtn").disabled = !!todayEntry;
-            document.getElementById("noBtn").disabled = !!todayEntry;
-        }
-
-        function addEntry(result) {
-            const today = getToday();
-            const history = loadUsage();
-
-            // prevent more than once per day
-            if (history.find(e => e.date === today)) return;
-
-            const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
-            const totalYes = thisWeek.filter(e => e.result === "כן").length;
-            const lastTwo = thisWeek.slice(-2).map(e => e.result);
-
-            if (result === "כן") {
-                if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
-                    alert("עברת את מגבלת השימוש השבועית או עישנת פעמיים רצוף. אי אפשר לעשן היום.");
-                    return;
-                }
+      const ctx = document.getElementById('weeklyChart');
+      weeklyChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'כן',
+              data: dataYes,
+              backgroundColor: 'rgba(76, 175, 80, 0.7)'
+            },
+            {
+              label: 'לא',
+              data: dataNo,
+              backgroundColor: 'rgba(244, 67, 54, 0.7)'
             }
-
-            history.push({ date: today, result });
-            saveUsage(history);
-            updateUI();
-        }
-
-        document.getElementById("yesBtn").onclick = () => addEntry("כן");
-        document.getElementById("noBtn").onclick = () => addEntry("לא");
-
-        updateUI();
-    </script>
-
-<div class="card">
-  <h3>פירוט שבועי (גרף)</h3>
-  <canvas id="weeklyChart" width="400" height="200"></canvas>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-function renderChart() {
-  const history = JSON.parse(localStorage.getItem('usage_history_v2') || '[]');
-  const today = new Date();
-  const labels = [];
-  const dataYes = [];
-  const dataNo = [];
-
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
-    const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
-    const dateStr = d.toISOString().split('T')[0];
-    labels.push(label);
-    const entry = history.find(e => e.date === dateStr);
-    dataYes.push(entry && entry.result === "כן" ? 1 : 0);
-    dataNo.push(entry && entry.result === "לא" ? 1 : 0);
-  }
-
-  new Chart(document.getElementById('weeklyChart'), {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'כן',
-          data: dataYes,
-          backgroundColor: 'rgba(76, 175, 80, 0.7)'
+          ]
         },
-        {
-          label: 'לא',
-          data: dataNo,
-          backgroundColor: 'rgba(244, 67, 54, 0.7)'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom' }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 1,
-          ticks: {
-            callback: function(value) {
-              return value === 1 ? 'השתמשת' : '';
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 1,
+              ticks: {
+                callback: function(value) {
+                  return value === 1 ? 'השתמשת' : '';
+                }
+              }
             }
           }
         }
-      }
+      });
     }
-  });
-}
 
-renderChart();
-</script>
+    document.getElementById("yesBtn").onclick = () => addEntry("כן");
+    document.getElementById("noBtn").onclick = () => addEntry("לא");
 
+    updateUI();
+    renderChart();
+  </script>
 </body>
 </html>
