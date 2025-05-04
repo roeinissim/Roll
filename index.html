@@ -2,290 +2,198 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>הגרלה יומית</title>
-  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
-  <style>
-    
-    body {
-      margin: 0;
-      font-family: 'Secular One', sans-serif;
-      background: url('back.png') no-repeat center center fixed;
-      background-size: cover;
-      padding: 40px 10px;
-    }
-
-
-    * {
-      font-family: 'Secular One', sans-serif !important;
-      font-weight: normal !important;
-    }
-
-    h1 {
-      font-size: 34px;
-      margin-bottom: 25px;
-      color: #262729;
-    } 
-
-    .title-wrapper {
-  max-width: 600px;
-  margin: 0 auto; /* מרכז את הבלוק */
-  padding: 20px 10px;
-}
-
-.title-wrapper h1 {
-  font-size: 32px;
-  color: #ffffff; /* או כל צבע */
-  text-align: right; /* מיישר את הטקסט ימינה בתוך הבלוק */
-  margin: 0;
-}
-
-    
-    .card {
-  background-color: rgba(32, 58, 74, 0.5); /* גוון רויאל כחול־ירוק שקוף */
-  border-radius: 16px;
-  padding: 20px;
-  margin: 16px auto;
-  max-width: 600px;
-  width: 70%;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(12px); /* אפקט זכוכית יוקרתית */
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.3s ease;
-}
-
-    button, input[type="time"], input[type="date"], select {
-      padding: 12px;
-      margin: 10px auto;
-      font-size: 16px;
-      border: none;
-      border-radius: 8px;
-      width: 65%;
-      max-width: 400px;
-      background-color: #2f81f7;
-      color: white;
-      cursor: pointer;
-      display: block;
-    }
-
-    button:hover {
-      background-color: #1f6feb;
-    }
-
-    label, p, h2 {
-      font-weight: normal;
-      font-size: 18px;
-      margin-bottom: 6px;
-      color: #000000;
-    }
-
-    #today-result {
-      font-size: 22px;
-      margin: 15px 0;
-    }
-
-    ul {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
-
-    li {
-      border-bottom: 1px solid #444;
-      padding: 6px 0;
-    }
-
-    .history-list div {
-       color: #262729; /* או כל צבע אחר שתרצה */
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>השליטה של רועי</title>
+    <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Secular One', sans-serif;
+            background: #1c1f26;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .card {
+            background-color: rgba(32, 64, 72, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 16px auto;
+            max-width: 600px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 12px;
+            border: none;
+            background-color: #4ea3a3;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #888;
+        }
+    </style>
 </head>
 <body>
-  <div class="title-wrapper">
-  <h1>שלום רועי!</h1>
+    <h1>שלום רועי!</h1>
+    <div class="card">
+        <p>האם היום אתה מעשן?</p>
+        <button id="yesBtn">כן, אני מעשן</button>
+        <button id="noBtn">לא, היום לא</button>
+    </div>
+    <div class="card">
+        <p id="summary"></p>
+        <p id="message"></p>
+    </div>
+    <div class="card">
+        <h3>היסטוריה שבועית</h3>
+        <div id="historyList"></div>
+    </div>
+
+    <script>
+        const usageKey = 'usage_history_v2';
+
+        function getToday() {
+            const now = new Date();
+            return now.toISOString().split('T')[0];
+        }
+
+        function getWeekStart(dateStr) {
+            const date = new Date(dateStr);
+            const day = date.getDay(); // 0 = Sunday
+            date.setDate(date.getDate() - day);
+            return date.toISOString().split('T')[0];
+        }
+
+        function loadUsage() {
+            return JSON.parse(localStorage.getItem(usageKey) || '[]');
+        }
+
+        function saveUsage(history) {
+            localStorage.setItem(usageKey, JSON.stringify(history));
+        }
+
+        function updateUI() {
+            const today = getToday();
+            const history = loadUsage();
+            const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+
+            const totalYes = thisWeek.filter(e => e.result === "כן").length;
+            const todayEntry = history.find(e => e.date === today);
+
+            document.getElementById("summary").innerText = `השבוע עישנת ${totalYes} מתוך 4`;
+            document.getElementById("message").innerText = todayEntry ? `החלטת: ${todayEntry.result}` : '';
+
+            const historyList = document.getElementById("historyList");
+            historyList.innerHTML = '';
+            thisWeek.slice().reverse().forEach(entry => {
+                const div = document.createElement('div');
+                div.innerText = `${entry.date} : ${entry.result}`;
+                historyList.appendChild(div);
+            });
+
+            document.getElementById("yesBtn").disabled = !!todayEntry;
+            document.getElementById("noBtn").disabled = !!todayEntry;
+        }
+
+        function addEntry(result) {
+            const today = getToday();
+            const history = loadUsage();
+
+            // prevent more than once per day
+            if (history.find(e => e.date === today)) return;
+
+            const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+            const totalYes = thisWeek.filter(e => e.result === "כן").length;
+            const lastTwo = thisWeek.slice(-2).map(e => e.result);
+
+            if (result === "כן") {
+                if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
+                    alert("עברת את מגבלת השימוש השבועית או עישנת פעמיים רצוף. אי אפשר לעשן היום.");
+                    return;
+                }
+            }
+
+            history.push({ date: today, result });
+            saveUsage(history);
+            updateUI();
+        }
+
+        document.getElementById("yesBtn").onclick = () => addEntry("כן");
+        document.getElementById("noBtn").onclick = () => addEntry("לא");
+
+        updateUI();
+    </script>
+
+<div class="card">
+  <h3>פירוט שבועי (גרף)</h3>
+  <canvas id="weeklyChart" width="400" height="200"></canvas>
 </div>
 
-
-  <div class="card">
-    <p>היום יצא: <span id="today-result">עדיין לא הוגרל</span></p>
-    <button onclick="performDraw()">בצע הגרלה</button>
-    <button onclick="markFollowed()">עמדתי בהחלטה</button>
-    <p id="follow-status"></p>
-  </div>
-
-  <div class="card">
-    <h2>היסטוריה</h2>
-    <ul id="history-list"></ul>
-  </div>
-
-  <div class="card">
-    <h2>סטטיסטיקות</h2>
-    <div id="stats-content"></div>
-  </div>
-
-  <div class="card">
-    <h2>הגדרות</h2>
-    <label>בחר סוג שבוע התחלתי:</label>
-    <select id="week-type">
-      <option value="בית">בית</option>
-      <option value="בסיס">בסיס</option>
-    </select>
-    <label>בחר תאריך התחלה:</label>
-    <input type="date" id="start-date" />
-    <label>בחר שעת תזכורת:</label>
-    <input type="time" id="reminder-time" />
-    <button onclick="saveSettings()">שמור הגדרות</button>
-    <br><br>
-    <button onclick="confirmReset()" style="background-color: #cc4444; margin-top: 10px;">איפוס כל הנתונים</button>
-  </div>
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const historyKey = "draw_history";
-  const settingsKey = "draw_settings";
+function renderChart() {
+  const history = JSON.parse(localStorage.getItem('usage_history_v2') || '[]');
+  const today = new Date();
+  const labels = [];
+  const dataYes = [];
+  const dataNo = [];
 
-  function getToday() {
-    const now = new Date();
-    const offset = 21;
-    if (now.getHours() < offset) now.setDate(now.getDate() - 1);
-    return now.toISOString().split("T")[0];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
+    const dateStr = d.toISOString().split('T')[0];
+    labels.push(label);
+    const entry = history.find(e => e.date === dateStr);
+    dataYes.push(entry && entry.result === "כן" ? 1 : 0);
+    dataNo.push(entry && entry.result === "לא" ? 1 : 0);
   }
 
-  function saveSettings() {
-    const settings = {
-      startDate: document.getElementById("start-date").value,
-      weekType: document.getElementById("week-type").value,
-      reminder: document.getElementById("reminder-time").value
-    };
-    localStorage.setItem(settingsKey, JSON.stringify(settings));
-    alert("ההגדרות נשמרו!");
-  }
-
-  function confirmReset() {
-    if (confirm("האם אתה בטוח שאתה רוצה לאפס את כל הנתונים? פעולה זו בלתי הפיכה.")) {
-      localStorage.clear();
-      location.reload();
-    }
-  }
-
-  function getWeekType() {
-    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
-    if (!s.startDate || !s.weekType) return "לא ידוע";
-    const start = new Date(s.startDate);
-    const now = new Date();
-    const days = Math.floor((now - start) / (1000*60*60*24));
-    const weekShift = Math.floor(days / 7);
-    return (s.weekType === "בית") === (weekShift % 2 === 0) ? "בית" : "בסיס";
-  }
-
-  function performDraw() {
-  const today = getToday();
-  const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-  if (history.find(d => d.date === today)) {
-    updateUI();
-    return;
-  }
-
-  let result;
-  const lastTwo = history.slice(-2).map(d => d.result);
-
-  // כלל 1: שני "לא" או "מנוחה" ברצף => חובה "כן"
-  if (lastTwo.every(r => r === "לא" || r === "מנוחה")) {
-    result = "כן";
-  }
-  // כלל 2: שני "כן" ברצף => חובה "לא"
-  else if (lastTwo.every(r => r === "כן")) {
-    result = "לא";
-  }
-  // כלל 3: תחילת שבוע בית => כן
-  else if (getWeekType() === "בית") {
-    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
-    if (s.startDate) {
-      const daysSince = Math.floor((new Date() - new Date(s.startDate)) / (1000 * 60 * 60 * 24));
-      result = (daysSince % 7 === 0) ? "כן" : (Math.random() < 0.5 ? "כן" : "לא");
-    } else {
-      result = Math.random() < 0.5 ? "כן" : "לא";
-    }
-  }
-  // כלל 4: ברירת מחדל – 50/50
-  else {
-    result = Math.random() < 0.5 ? "כן" : "לא";
-  }
-
-  history.push({ date: today, result, followed: null });
-  localStorage.setItem(historyKey, JSON.stringify(history));
-  updateUI();
-}
-
-  function markFollowed() {
-    const today = getToday();
-    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-    const todayEntry = history.find(d => d.date === today);
-    if (todayEntry) {
-      todayEntry.followed = true;
-      localStorage.setItem(historyKey, JSON.stringify(history));
-      updateUI();
-    }
-  }
-
-  function updateUI() {
-    const history = JSON.parse(localStorage.getItem(historyKey) || "[]");
-    const today = getToday();
-    const todayEntry = history.find(d => d.date === today);
-    document.getElementById("today-result").textContent = todayEntry ? todayEntry.result : "עדיין לא הוגרל";
-    document.getElementById("follow-status").textContent = todayEntry?.followed ? "כל הכבוד רועי על המשמעת!" : "";
-
-    const list = document.getElementById("history-list");
-    list.innerHTML = "";
-    history.slice().reverse().forEach(d => {
-      const li = document.createElement("li");
-      li.textContent = `${formatDate(d.date)}: ${d.result}${d.followed ? " ✅" : ""}`;
-      list.appendChild(li);
-    });
-
-    const total = history.length;
-    const yes = history.filter(d => d.result === "כן").length;
-    const no = history.filter(d => d.result === "לא").length;
-    const followed = history.filter(d => d.followed).length;
-    const percent = total ? Math.round((followed / total) * 100) : 0;
-
-    document.getElementById("stats-content").innerHTML =
-      `סה"כ ימים: ${total}<br>סה"כ כן: ${yes}<br>סה"כ לא: ${no}<br>עמידה בהחלטות: ${followed}<br>אחוז עמידה: ${percent}%<br>שבוע נוכחי: ${getWeekType()}`;
-  }
-
-  function formatDate(iso) {
-    const [y, m, d] = iso.split("-");
-    return `${d}.${m}.${y}`;
-  }
-
-  window.onload = function() {
-    const s = JSON.parse(localStorage.getItem(settingsKey) || "{}");
-    if (s.startDate) document.getElementById("start-date").value = s.startDate;
-    if (s.weekType) document.getElementById("week-type").value = s.weekType;
-    if (s.reminder) document.getElementById("reminder-time").value = s.reminder;
-    updateUI();
-  }
-
-  // בקשת הרשאה להתראות
-  if ('Notification' in window && Notification.permission !== 'granted') {
-    Notification.requestPermission();
-  }
-
-  // בדיקת תזכורת כל דקה
-  setInterval(() => {
-    const s = JSON.parse(localStorage.getItem("draw_settings") || "{}");
-    if (!s.reminder) return;
-    const now = new Date();
-    const [h, m] = s.reminder.split(":").map(Number);
-    if (now.getHours() === h && now.getMinutes() === m) {
-      const today = getToday();
-      const history = JSON.parse(localStorage.getItem("draw_history") || "[]");
-      const already = history.find(h => h.date === today);
-      if (!already && Notification.permission === "granted") {
-        new Notification("רועי, לא ביצעת הגרלה היום!");
+  new Chart(document.getElementById('weeklyChart'), {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'כן',
+          data: dataYes,
+          backgroundColor: 'rgba(76, 175, 80, 0.7)'
+        },
+        {
+          label: 'לא',
+          data: dataNo,
+          backgroundColor: 'rgba(244, 67, 54, 0.7)'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 1,
+          ticks: {
+            callback: function(value) {
+              return value === 1 ? 'השתמשת' : '';
+            }
+          }
+        }
       }
     }
-  }, 60000);
+  });
+}
+
+renderChart();
 </script>
+
 </body>
 </html>
