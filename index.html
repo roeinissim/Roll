@@ -76,13 +76,15 @@
       return now.toISOString().split('T')[0];
     }
 
-    function getWeekStart(dateStr) {
-  const local = new Date(dateStr + "T00:00:00");
-  const day = local.getDay(); // ראשון = 0, שלישי = 2
-  const offset = (day - 2 + 7) % 7;
+function getWeekStart(dateStr) {
+  const local = new Date(dateStr + "T00:00:00"); // מבטיח שזה לפי שעון מקומי
+  const day = local.getDay(); // Sunday = 0 ... Tuesday = 2
+  const offset = (day - 2 + 7) % 7; // מחשב מרחק משלישי
   local.setDate(local.getDate() - offset);
+  local.setHours(0, 0, 0, 0);
   return local.toISOString().split('T')[0];
 }
+
 
 
     function loadUsage() {
@@ -143,9 +145,7 @@
     function renderChart() {
   if (weeklyChartInstance) weeklyChartInstance.destroy();
 
-  const todayStr = getToday();
-  const startOfWeek = new Date(getWeekStart(todayStr) + "T00:00:00");
-
+  const startOfWeek = new Date(getWeekStart(getToday()) + "T00:00:00");
   const history = loadUsage();
   const labels = [];
   const dataYes = [];
@@ -199,6 +199,7 @@
     }
   });
 }
+
 
 
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
