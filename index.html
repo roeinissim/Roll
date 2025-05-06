@@ -141,63 +141,65 @@
     }
 
     function renderChart() {
-      if (weeklyChartInstance) weeklyChartInstance.destroy();
+  if (weeklyChartInstance) weeklyChartInstance.destroy();
 
-      const todayStr = getToday();
-      const startOfWeek = new Date(getWeekStart(todayStr));
-      const history = loadUsage();
-      const labels = [];
-      const dataYes = [];
-      const dataNo = [];
+  const todayStr = getToday();
+  const startOfWeek = new Date(getWeekStart(todayStr) + "T00:00:00");
 
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(startOfWeek.getTime());
-        d.setDate(startOfWeek.getDate() + i);
-        const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
-        const dateStr = d.toISOString().split('T')[0];
-        labels.push(label);
-        const entry = history.find(e => e.date === dateStr);
-        dataYes.push(entry && entry.result === "כן" ? 1 : 0);
-        dataNo.push(entry && entry.result === "לא" ? 1 : 0);
-      }
+  const history = loadUsage();
+  const labels = [];
+  const dataYes = [];
+  const dataNo = [];
 
-      const ctx = document.getElementById('weeklyChart');
-      weeklyChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: 'כן',
-              data: dataYes,
-              backgroundColor: 'rgba(76, 175, 80, 0.7)'
-            },
-            {
-              label: 'לא',
-              data: dataNo,
-              backgroundColor: 'rgba(244, 67, 54, 0.7)'
-            }
-          ]
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(startOfWeek);
+    d.setDate(startOfWeek.getDate() + i);
+    const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
+    const dateStr = d.toISOString().split('T')[0];
+    labels.push(label);
+    const entry = history.find(e => e.date === dateStr);
+    dataYes.push(entry && entry.result === "כן" ? 1 : 0);
+    dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+  }
+
+  const ctx = document.getElementById('weeklyChart');
+  weeklyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'כן',
+          data: dataYes,
+          backgroundColor: 'rgba(76, 175, 80, 0.7)'
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom' }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 1,
-              ticks: {
-                callback: function(value) {
-                  return value === 1 ? 'עשית' : '';
-                }
-              }
+        {
+          label: 'לא',
+          data: dataNo,
+          backgroundColor: 'rgba(244, 67, 54, 0.7)'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 1,
+          ticks: {
+            callback: function(value) {
+              return value === 1 ? 'עשית' : '';
             }
           }
         }
-      });
+      }
     }
+  });
+}
+
 
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
     document.getElementById("noBtn").onclick = () => addEntry("לא");
