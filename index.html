@@ -150,9 +150,10 @@
       const dataYes = [];
       const dataNo = [];
 
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(today.getDate() - i);
+      const startOfWeek = new Date(getWeekStart(today.toISOString().split('T')[0]));
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(startOfWeek);
+        d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
         const dateStr = d.toISOString().split('T')[0];
         labels.push(label);
