@@ -78,7 +78,7 @@
     // תחילת שבוע = יום שלישי
 function getWeekStart(dateStr) {
   const date = new Date(dateStr);
-  const day = date.getDay(2); // ראשון=0, שני=1, שלישי=2
+  const day = date.getDay(); // ראשון=0, שני=1, שלישי=2
   const offset = (day - 2 + 7) % 7;
   date.setDate(date.getDate() - offset);
   date.setHours(0, 0, 0, 0);
