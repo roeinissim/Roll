@@ -67,24 +67,23 @@
   </div>
 
   <script>
-    let weeklyChartInstance = null;
-    const usageKey = 'usage_history_v2';
+        let weeklyChartInstance = null;
+    const usageKey = 'usage_history_v3';
 
     function getToday() {
       const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
       return now.toISOString().split('T')[0];
     }
 
-    // תחילת שבוע = יום שלישי
-function getWeekStart(dateStr) {
-  const date = new Date(dateStr);
-  const day = date.getDay(); // ראשון=0, שני=1, שלישי=2
-  const offset = (day - 2 + 7) % 7;
-  date.setDate(date.getDate() - offset);
-  date.setHours(0, 0, 0, 0);
-  return date.toISOString().split('T')[0];
-}
-
+    function getWeekStart(dateStr) {
+      const date = new Date(dateStr);
+      const day = date.getDay(); // ראשון = 0, שלישי = 2
+      const offset = (day - 2 + 7) % 7;
+      date.setDate(date.getDate() - offset);
+      date.setHours(0, 0, 0, 0);
+      return date.toISOString().split('T')[0];
+    }
 
     function loadUsage() {
       return JSON.parse(localStorage.getItem(usageKey) || '[]');
@@ -144,17 +143,16 @@ function getWeekStart(dateStr) {
     function renderChart() {
       if (weeklyChartInstance) weeklyChartInstance.destroy();
 
+      const todayStr = getToday();
+      const startOfWeek = new Date(getWeekStart(todayStr));
       const history = loadUsage();
-      const today = new Date();
       const labels = [];
       const dataYes = [];
       const dataNo = [];
 
-      const todayStr = getToday();
-      const startOfWeek = new Date(getWeekStart(todayStr));
       for (let i = 0; i < 7; i++) {
-        const d = new Date(startOfWeek);
-        d.setDate(d.getDate() + i);
+        const d = new Date(startOfWeek.getTime());
+        d.setDate(startOfWeek.getDate() + i);
         const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
         const dateStr = d.toISOString().split('T')[0];
         labels.push(label);
