@@ -77,13 +77,13 @@
     }
 
     function getWeekStart(dateStr) {
-      const date = new Date(dateStr);
-      const day = date.getDay(); // ראשון = 0, שלישי = 2
-      const offset = (day - 2 + 7) % 7;
-      date.setDate(date.getDate() - offset);
-      date.setHours(0, 0, 0, 0);
-      return date.toISOString().split('T')[0];
-    }
+  const local = new Date(dateStr + "T00:00:00");
+  const day = local.getDay(); // ראשון = 0, שלישי = 2
+  const offset = (day - 2 + 7) % 7;
+  local.setDate(local.getDate() - offset);
+  return local.toISOString().split('T')[0];
+}
+
 
     function loadUsage() {
       return JSON.parse(localStorage.getItem(usageKey) || '[]');
@@ -150,7 +150,7 @@
       const dataYes = [];
       const dataNo = [];
 
-      for (let i = 1; i < 8; i++) {
+      for (let i = 0; i < 7; i++) {
         const d = new Date(startOfWeek.getTime());
         d.setDate(startOfWeek.getDate() + i);
         const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
