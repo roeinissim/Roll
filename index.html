@@ -48,6 +48,7 @@
     <p>האם היום אתה מעשן?</p>
     <button id="yesBtn">כן, אני מעשן</button>
     <button id="noBtn">לא, היום לא</button>
+    <button id="decideBtn">תחליט בשבילי</button>
   </div>
 
   <div class="card">
@@ -74,11 +75,14 @@
       return now.toISOString().split('T')[0];
     }
 
+    // תחילת שבוע = יום שלישי
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
-      const day = date.getDay(); // 0 = ראשון ... 2 = שלישי
-      const offset = (day + 4) % 7; // כדי ששלישי (3) יחזיר 0
+      const day = date.getDay(); // 0 = ראשון, 1 = שני, 2 = שלישי...
+      // נחשב כמה ימים אחורה כדי להגיע לשלישי האחרון
+      const offset = (day >= 2) ? (day - 2) : (7 - (2 - day));
       date.setDate(date.getDate() - offset);
+      date.setHours(0, 0, 0, 0);
       return date.toISOString().split('T')[0];
     }
 
@@ -111,6 +115,7 @@
 
       document.getElementById("yesBtn").disabled = !!todayEntry;
       document.getElementById("noBtn").disabled = !!todayEntry;
+      document.getElementById("decideBtn").disabled = !!todayEntry;
     }
 
     function addEntry(result) {
@@ -196,6 +201,20 @@
 
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
     document.getElementById("noBtn").onclick = () => addEntry("לא");
+    document.getElementById("decideBtn").onclick = () => {
+      const today = getToday();
+      const history = loadUsage();
+      const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+      const totalYes = thisWeek.filter(e => e.result === "כן").length;
+      const lastTwo = thisWeek.slice(-2).map(e => e.result);
+
+      if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
+        addEntry("לא");
+      } else {
+        const result = Math.random() < 0.5 ? "כן" : "לא";
+        addEntry(result);
+      }
+    };
 
     updateUI();
     renderChart();
