@@ -118,21 +118,29 @@ function getWeekStart(dateStr) {
     }
 
     function addEntry(result) {
-      const today = getToday();
-      const history = loadUsage();
+  const today = getToday();
+  const history = loadUsage();
 
-      if (history.find(e => e.date === today)) return;
+  if (history.find(e => e.date === today)) return;
 
-      const thisWeek = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
-      const totalYes = thisWeek.filter(e => e.result === "כן").length;
-      const lastTwo = thisWeek.slice(-2).map(e => e.result);
+  const thisWeek = history.filter(entry => getWeekStart(entry.date).toISOString().split('T')[0] === getWeekStart(today).toISOString().split('T')[0]);
+  const totalYes = thisWeek.filter(e => e.result === "כן").length;
+  const lastTwo = history.slice(-2).map(e => e.result); // ← לוקח את שני הימים האחרונים בכל ההיסטוריה
 
-      if (result === "כן") {
-        if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
-          alert("עברת את מגבלת השימוש השבועית או עשית פעמיים רצוף. אי אפשר היום.");
-          return;
-        }
-      }
+  if (result === "כן") {
+    if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
+      alert("עברת את מגבלת השימוש השבועית או עשית פעמיים רצוף. אי אפשר היום.");
+      return;
+    }
+  }
+
+  history.push({ date: today, result });
+  saveUsage(history);
+  updateUI();
+  renderChart();
+}
+
+
 
       history.push({ date: today, result });
       saveUsage(history);
