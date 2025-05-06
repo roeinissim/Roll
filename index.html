@@ -157,8 +157,8 @@ function renderChart() {
   const dataNo = [];
 
   for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek);
-    d.setDate(startOfWeek.getDate() + i);
+    const d = new Date(startOfWeek.getTime()); // יוצרים עותק אמיתי
+    d.setDate(d.getDate() + i);
     const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
     const dateStr = d.toISOString().split('T')[0];
     labels.push(label);
