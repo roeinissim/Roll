@@ -71,21 +71,19 @@
     const usageKey = 'usage_history_v3';
 
     function getToday() {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-      return now.toISOString().split('T')[0];
-    }
-
-function getWeekStart(dateStr) {
-  const local = new Date(dateStr + "T00:00:00"); // מבטיח שזה לפי שעון מקומי
-  const day = local.getDay(); // Sunday = 0 ... Tuesday = 2
-  const offset = (day - 2 + 7) % 7; // מחשב מרחק משלישי
-  local.setDate(local.getDate() - offset);
-  local.setHours(0, 0, 0, 0);
-  return local.toISOString().split('T')[0];
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  return now.toISOString().split('T')[0];
 }
 
 
+function getWeekStart(dateStr) {
+  const date = new Date(dateStr + "T00:00:00");
+  const day = date.getDay(); // Sunday = 0, Monday = 1, Tuesday = 2
+  const offset = (day - 2 + 7) % 7;
+  date.setDate(date.getDate() - offset);
+  return date;
+}
 
     function loadUsage() {
       return JSON.parse(localStorage.getItem(usageKey) || '[]');
@@ -142,20 +140,23 @@ function getWeekStart(dateStr) {
       renderChart();
     }
 
-    function renderChart() {
+function renderChart() {
   if (weeklyChartInstance) weeklyChartInstance.destroy();
 
-  const startOfWeek = new Date(getWeekStart(getToday()) + "T00:00:00");
   const history = loadUsage();
+  const startOfWeek = getWeekStart(getToday());
+
   const labels = [];
   const dataYes = [];
   const dataNo = [];
 
   for (let i = 0; i < 7; i++) {
-    const d = new Date(startOfWeek);
+    const d = new Date(startOfWeek.getTime());
     d.setDate(startOfWeek.getDate() + i);
+
     const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
     const dateStr = d.toISOString().split('T')[0];
+
     labels.push(label);
     const entry = history.find(e => e.date === dateStr);
     dataYes.push(entry && entry.result === "כן" ? 1 : 0);
@@ -199,6 +200,7 @@ function getWeekStart(dateStr) {
     }
   });
 }
+
 
 
 
