@@ -56,7 +56,7 @@
   </div>
 
   <div class="card">
-    <h3>היסטורית החלטות</h3>
+    <h3>היסטוריה שבועית</h3>
     <div id="historyList"></div>
   </div>
 
@@ -76,8 +76,9 @@
 
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
-      const day = date.getDay();
-      date.setDate(date.getDate() - day);
+      const day = date.getDay(); // 0 = ראשון ... 2 = שלישי
+      const offset = (day + 4) % 7; // כדי ששלישי (3) יחזיר 0
+      date.setDate(date.getDate() - offset);
       return date.toISOString().split('T')[0];
     }
 
