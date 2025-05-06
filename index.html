@@ -78,7 +78,7 @@
     // תחילת שבוע = יום שלישי
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
-      const day = date.getDay(); // 0 = ראשון, 1 = שני, 2 = שלישי...
+      const day = date.getDay(2); // 0 = ראשון, 1 = שני, 2 = שלישי...
       // נחשב כמה ימים אחורה כדי להגיע לשלישי האחרון
       const offset = (day >= 2) ? (day - 2) : (7 - (2 - day));
       date.setDate(date.getDate() - offset);
@@ -153,7 +153,7 @@
       const startOfWeek = new Date(getWeekStart(today.toISOString().split('T')[0]));
       for (let i = 0; i < 7; i++) {
         const d = new Date(startOfWeek);
-        d.setDate(d.getDate() + i++);
+        d.setDate(d.getDate() + i);
         const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
         const dateStr = d.toISOString().split('T')[0];
         labels.push(label);
