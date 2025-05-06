@@ -150,7 +150,8 @@ function getWeekStart(dateStr) {
       const dataYes = [];
       const dataNo = [];
 
-      const startOfWeek = new Date(getWeekStart(today.toISOString().split('T')[0]));
+      const todayStr = getToday();
+      const startOfWeek = new Date(getWeekStart(todayStr));
       for (let i = 0; i < 7; i++) {
         const d = new Date(startOfWeek);
         d.setDate(d.getDate() + i);
