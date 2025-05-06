@@ -76,14 +76,15 @@
     }
 
     // תחילת שבוע = יום שלישי
-    function getWeekStart(dateStr) {
-      const date = new Date(dateStr);
-      const day = date.getDay(); // 0 = ראשון, 1 = שני, ..., 6 = שבת
-      const offset = (day + 5) % 7; // ייתן 0 ביום שלישי
-      date.setDate(date.getDate() - offset);
-      date.setHours(0, 0, 0, 0);
-      return date.toISOString().split('T')[0];
-    }
+function getWeekStart(dateStr) {
+  const date = new Date(dateStr);
+  const day = date.getDay(); // ראשון=0, שני=1, שלישי=2
+  const offset = (day - 2 + 7) % 7;
+  date.setDate(date.getDate() - offset);
+  date.setHours(0, 0, 0, 0);
+  return date.toISOString().split('T')[0];
+}
+
 
     function loadUsage() {
       return JSON.parse(localStorage.getItem(usageKey) || '[]');
