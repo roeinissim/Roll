@@ -101,7 +101,7 @@
       const totalYes = thisWeek.filter(e => e.result === "כן").length;
       const todayEntry = history.find(e => e.date === today);
 
-      document.getElementById("summary").innerText = `השבוע עישנת ${totalYes} מתוך 4`;
+      document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4`;
       document.getElementById("message").innerText = todayEntry ? `החלטת: ${todayEntry.result}` : '';
 
       const historyList = document.getElementById("historyList");
@@ -129,7 +129,7 @@
 
       if (result === "כן") {
         if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
-          alert("עברת את מגבלת השימוש השבועית או עישנת פעמיים רצוף. אי אפשר לעשן היום.");
+          alert("עברת את מגבלת השימוש השבועית או עשית פעמיים רצוף. אי אפשר היום.");
           return;
         }
       }
@@ -190,7 +190,7 @@
               max: 1,
               ticks: {
                 callback: function(value) {
-                  return value === 1 ? 'השתמשת' : '';
+                  return value === 1 ? 'עשית' : '';
                 }
               }
             }
