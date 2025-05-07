@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>השליטה של רועי</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -68,7 +68,7 @@
 
   <script>
     let weeklyChartInstance = null;
-    const usageKey = 'usage_history_final';
+    const usageKey = 'usage_history_v4';
 
     function getToday() {
       const now = new Date();
@@ -77,11 +77,12 @@
     }
 
     function getWeekStart(dateStr) {
-      const date = new Date(dateStr + "T00:00:00");
-      const day = date.getDay();
-      const offset = (day - 2 + 7) % 7; // שלישי = 2
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      const jsDay = date.getDay(); // Sunday = 0, Tuesday = 2
+      const offset = (jsDay - 2 + 7) % 7;
       date.setDate(date.getDate() - offset);
-      return date;
+      return date.toISOString().split('T')[0];
     }
 
     function loadUsage() {
@@ -92,11 +93,9 @@
       localStorage.setItem(usageKey, JSON.stringify(history));
     }
 
-    function getCurrentWeek(history, today) {
-      const weekStartStr = getWeekStart(today).toISOString().split('T')[0];
-      return history.filter(entry =>
-        getWeekStart(entry.date).toISOString().split('T')[0] === weekStartStr
-      );
+    function getCurrentWeek(history, todayStr) {
+      const weekStart = getWeekStart(todayStr);
+      return history.filter(entry => getWeekStart(entry.date) === weekStart);
     }
 
     function updateUI() {
@@ -117,9 +116,10 @@
         historyList.appendChild(div);
       });
 
-      document.getElementById("yesBtn").disabled = !!todayEntry;
-      document.getElementById("noBtn").disabled = !!todayEntry;
-      document.getElementById("decideBtn").disabled = !!todayEntry;
+      const disabled = !!todayEntry;
+      document.getElementById("yesBtn").disabled = disabled;
+      document.getElementById("noBtn").disabled = disabled;
+      document.getElementById("decideBtn").disabled = disabled;
     }
 
     function addEntry(result) {
@@ -148,15 +148,17 @@
       if (weeklyChartInstance) weeklyChartInstance.destroy();
 
       const today = getToday();
-      const startOfWeek = getWeekStart(today);
+      const startDateStr = getWeekStart(today);
+      const startDate = new Date(startDateStr + "T00:00:00");
       const history = loadUsage();
+
       const labels = [];
       const dataYes = [];
       const dataNo = [];
 
       for (let i = 0; i < 7; i++) {
-        const d = new Date(startOfWeek.getTime());
-        d.setDate(d.getDate() + i);
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
         const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
         const dateStr = d.toISOString().split('T')[0];
         labels.push(label);
