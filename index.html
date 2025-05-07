@@ -168,57 +168,58 @@ function renderChart() {
   if (weeklyChartInstance) weeklyChartInstance.destroy();
 
   const today = getToday();
-  const weekStartStr = getWeekStart(today);
-  const weekStart = parseDateStr(weekStartStr);
+  const weekStart = new Date(getWeekStart(today));
   const history = loadUsage();
   const thisWeek = getCurrentWeek(history, today);
 
-  const labels = [];
-  const dataYes = [];
-  const dataNo = [];
-
-  const hebrewDays = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
+  const labels = ["שלישי","רביעי","חמישי","שישי","שבת","ראשון","שני"];
+  const dataYes = [], dataNo = [];
 
   for (let i = 0; i < 7; i++) {
-    const d = addDays(weekStart, i);
-    const dateStr = formatDateString(d);
-    labels.push(hebrewDays[i]);
-
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    const dateStr = d.toISOString().split("T")[0];
     const entry = thisWeek.find(e => e.date === dateStr);
-    dataYes.push(entry && entry.result === "כן" ? 1 : 0);
-    dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+    dataYes.push(entry && entry.result==="כן"?1:0);
+    dataNo.push(entry && entry.result==="לא"?1:0);
   }
 
-  const ctx = document.getElementById('weeklyChart');
+  const ctx = document.getElementById("weeklyChart").getContext("2d");
+  // כיוון שהcanvas כבר בגודל 400×200, נשאיר maintainAspectRatio:true
   weeklyChartInstance = new Chart(ctx, {
-    type: 'bar',
+    type: "bar",
     data: {
-      labels: labels,
+      labels,
       datasets: [
         {
-          label: 'כן',
+          label: "כן",
           data: dataYes,
-          backgroundColor: 'rgba(76, 175, 80, 0.7)',
-          barThickness: 20
+          backgroundColor: "rgba(76,175,80,0.7)",
+          barThickness: 20,
+          categoryPercentage: 0.6,
+          barPercentage: 0.8
         },
         {
-          label: 'לא',
+          label: "לא",
           data: dataNo,
-          backgroundColor: 'rgba(244, 67, 54, 0.7)',
-          barThickness: 20
+          backgroundColor: "rgba(244,67,54,0.7)",
+          barThickness: 20,
+          categoryPercentage: 0.6,
+          barPercentage: 0.8
         }
       ]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: true,   // חשוב להחזיר אותו ל־true
       plugins: {
-        legend: { position: 'bottom' }
+        legend: { position: "bottom" }
       },
       scales: {
         x: {
-          stacked: false,
-          grid: { display: false }
+          grid: { display: false },
+          // ככה העמודות יהיו מדויקות באמצע כל קטגוריה
+          offset: true
         },
         y: {
           beginAtZero: true,
@@ -226,15 +227,14 @@ function renderChart() {
           grid: { display: false },
           ticks: {
             stepSize: 1,
-            callback: function(value) {
-              return value === 1 ? 'עשית' : '';
-            }
+            callback: v => v === 1 ? "✔" : ""
           }
         }
       }
     }
   });
 }
+
 
 
     function confirmReset() {
