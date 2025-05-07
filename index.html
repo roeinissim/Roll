@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>השליטה של רועי</title>
+  <title>הבחירה היומית</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -14,6 +14,8 @@
       color: white;
       text-align: center;
       padding: 20px;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .card {
       background-color: rgba(32, 64, 72, 0.5);
@@ -34,10 +36,29 @@
       color: white;
       cursor: pointer;
       margin: 5px;
+      transition: background-color 0.2s;
+    }
+    button:hover {
+      background-color: #3d8a8a;
     }
     button:disabled {
       background-color: #888;
       cursor: not-allowed;
+    }
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+    @media (max-width: 480px) {
+      button {
+        padding: 10px 18px;
+        font-size: 16px;
+        margin: 4px;
+      }
+      .card {
+        padding: 15px;
+      }
     }
   </style>
 </head>
@@ -63,12 +84,14 @@
 
   <div class="card">
     <h3>פירוט שבועי (גרף)</h3>
-    <canvas id="weeklyChart" width="400" height="200"></canvas>
+    <div class="chart-container">
+      <canvas id="weeklyChart"></canvas>
+    </div>
   </div>
 
   <script>
     let weeklyChartInstance = null;
-    const usageKey = 'usage_history_v6';
+    const usageKey = 'usage_history_v8';
     
     // Date utility functions
     function formatDateString(date) {
@@ -132,7 +155,35 @@
 
     function getCurrentWeek(history, todayStr) {
       const weekStart = getWeekStart(todayStr);
-      return history.filter(entry => getWeekStart(entry.date) === weekStart);
+      const weekStartDate = parseDateStr(weekStart);
+      
+      // Get all history entries from this week
+      const weekEntries = history.filter(entry => getWeekStart(entry.date) === weekStart);
+      
+      // Create a complete week array with all days
+      const completeWeek = [];
+      
+      // For each day of the week (7 days)
+      for (let i = 0; i < 7; i++) {
+        const currentDate = addDays(weekStartDate, i);
+        const currentDateStr = formatDateString(currentDate);
+        
+        // Find if there's an entry for this date
+        const existingEntry = weekEntries.find(entry => entry.date === currentDateStr);
+        
+        if (existingEntry) {
+          // If there's an entry, use it
+          completeWeek.push(existingEntry);
+        } else {
+          // If no entry and the date is in the past, add a "no" entry
+          const today = parseDateStr(getToday());
+          if (currentDate <= today) {
+            completeWeek.push({ date: currentDateStr, result: "לא" });
+          }
+        }
+      }
+      
+      return completeWeek;
     }
 
     function updateUI() {
@@ -170,19 +221,31 @@
         return false;
       }
       
-      // Check if already used twice in a row
-      // First, sort the entries by date
-      const sortedEntries = [...thisWeek].sort((a, b) => {
+      // Get only actual entries (not auto-generated ones)
+      const actualEntries = history.filter(entry => getWeekStart(entry.date) === getWeekStart(today));
+      
+      // Sort by date
+      const sortedEntries = [...actualEntries].sort((a, b) => {
         const dateA = parseDateStr(a.date);
         const dateB = parseDateStr(b.date);
         return dateA - dateB;
       });
       
-      // Get the last two entries
-      const lastTwo = sortedEntries.slice(-2);
+      // Need to check the last two actual YES entries
+      const lastTwoYes = sortedEntries.filter(e => e.result === "כן").slice(-2);
       
-      // Check if there are two entries and both are "yes"
-      if (lastTwo.length === 2 && lastTwo[0].result === "כן" && lastTwo[1].result === "כן") {
+      // If we have fewer than 2 "yes" entries, we can't have 2 in a row
+      if (lastTwoYes.length < 2) {
+        return true;
+      }
+      
+      // Check if the last two "yes" entries are consecutive days
+      const date1 = parseDateStr(lastTwoYes[0].date);
+      const date2 = parseDateStr(lastTwoYes[1].date);
+      const daysDiff = Math.round((date2 - date1) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff === 1) {
+        // Last two "yes" entries are consecutive days
         return false;
       }
       
@@ -218,6 +281,7 @@
       const weekStartStr = getWeekStart(today);
       const weekStart = parseDateStr(weekStartStr);
       const history = loadUsage();
+      const thisWeek = getCurrentWeek(history, today);
 
       const labels = [];
       const dataYes = [];
@@ -232,7 +296,9 @@
         
         labels.push(hebrewDays[i]);
         
-        const entry = history.find(e => e.date === dateStr);
+        // Find entry for this day in our complete week data
+        const entry = thisWeek.find(e => e.date === dateStr);
+        
         dataYes.push(entry && entry.result === "כן" ? 1 : 0);
         dataNo.push(entry && entry.result === "לא" ? 1 : 0);
       }
@@ -246,30 +312,49 @@
             {
               label: 'כן',
               data: dataYes,
-              backgroundColor: 'rgba(76, 175, 80, 0.7)'
+              backgroundColor: 'rgba(76, 175, 80, 0.7)',
+              barPercentage: 0.6,
+              categoryPercentage: 0.5
             },
             {
               label: 'לא',
               data: dataNo,
-              backgroundColor: 'rgba(244, 67, 54, 0.7)'
+              backgroundColor: 'rgba(244, 67, 54, 0.7)',
+              barPercentage: 0.6,
+              categoryPercentage: 0.5
             }
           ]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
           plugins: {
             legend: { position: 'bottom' }
           },
           scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
             y: {
               beginAtZero: true,
               max: 1,
+              grid: {
+                display: false
+              },
               ticks: {
                 stepSize: 1,
                 callback: function(value) {
                   return value === 1 ? 'עשית' : '';
                 }
               }
+            }
+          },
+          layout: {
+            padding: {
+              left: 10,
+              right: 10
             }
           }
         }
