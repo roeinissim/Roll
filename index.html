@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>השליטה של רועי</title>
+  <title>הבחירה היומית</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -68,20 +68,36 @@
 
   <script>
     let weeklyChartInstance = null;
-    const usageKey = 'usage_history_v4';
+    const usageKey = 'usage_history_v5';
+
+    function getIsraeliDate() {
+      // Get the current date in Israel timezone
+      const now = new Date();
+      const israelOptions = { timeZone: 'Asia/Jerusalem' };
+      const israelDateStr = now.toLocaleDateString('en-US', israelOptions);
+      const israelDate = new Date(israelDateStr);
+      return israelDate;
+    }
 
     function getToday() {
-      const now = new Date();
-      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      const now = getIsraeliDate();
       return now.toISOString().split('T')[0];
     }
 
     function getWeekStart(dateStr) {
       const [year, month, day] = dateStr.split('-').map(Number);
       const date = new Date(year, month - 1, day);
-      const jsDay = date.getDay(); // Sunday = 0, Tuesday = 2
-      const offset = (jsDay - 2 + 7) % 7;
-      date.setDate(date.getDate() - offset);
+      
+      // Find the previous Tuesday (day 2)
+      let dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, 2 = Tuesday, etc.
+      
+      // Calculate how many days to go back to reach Tuesday
+      // If today is Tuesday (2), go back 0 days
+      // If today is Wednesday (3), go back 1 day
+      // If today is Monday (1), go back 6 days
+      let daysToSubtract = (dayOfWeek + 5) % 7;
+      
+      date.setDate(date.getDate() - daysToSubtract);
       return date.toISOString().split('T')[0];
     }
 
@@ -98,6 +114,12 @@
       return history.filter(entry => getWeekStart(entry.date) === weekStart);
     }
 
+    function formatHebrewDate(dateStr) {
+      const [year, month, day] = dateStr.split('-');
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' });
+    }
+
     function updateUI() {
       const today = getToday();
       const history = loadUsage();
@@ -106,13 +128,13 @@
       const todayEntry = history.find(e => e.date === today);
 
       document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4`;
-      document.getElementById("message").innerText = todayEntry ? `החלטת: ${todayEntry.result}` : '';
+      document.getElementById("message").innerText = todayEntry ? `החלטת היום: ${todayEntry.result}` : '';
 
       const historyList = document.getElementById("historyList");
       historyList.innerHTML = '';
       thisWeek.slice().reverse().forEach(entry => {
         const div = document.createElement('div');
-        div.innerText = `${entry.date} : ${entry.result}`;
+        div.innerText = `${formatHebrewDate(entry.date)} : ${entry.result}`;
         historyList.appendChild(div);
       });
 
@@ -122,20 +144,42 @@
       document.getElementById("decideBtn").disabled = disabled;
     }
 
+    function canSmokeToday() {
+      const today = getToday();
+      const history = loadUsage();
+      const thisWeek = getCurrentWeek(history, today);
+      const totalYes = thisWeek.filter(e => e.result === "כן").length;
+      
+      // Check if already used 4 times this week
+      if (totalYes >= 4) {
+        return false;
+      }
+      
+      // Check if already used twice in a row
+      const sortedWeek = [...thisWeek].sort((a, b) => new Date(a.date) - new Date(b.date));
+      const lastTwo = sortedWeek.slice(-2).map(e => e.result);
+      
+      if (lastTwo.length === 2 && lastTwo[0] === "כן" && lastTwo[1] === "כן") {
+        return false;
+      }
+      
+      return true;
+    }
+
     function addEntry(result) {
       const today = getToday();
       const history = loadUsage();
-      if (history.find(e => e.date === today)) return;
+      
+      // Check if already made a decision today
+      if (history.find(e => e.date === today)) {
+        alert("כבר החלטת היום");
+        return;
+      }
 
-      const thisWeek = getCurrentWeek(history, today);
-      const totalYes = thisWeek.filter(e => e.result === "כן").length;
-      const lastTwo = thisWeek.slice(-2).map(e => e.result);
-
-      if (result === "כן") {
-        if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
-          alert("עברת את מגבלת השימוש השבועית או עשית פעמיים רצוף. אי אפשר היום.");
-          return;
-        }
+      // If trying to smoke but not allowed
+      if (result === "כן" && !canSmokeToday()) {
+        alert("עברת את מגבלת השימוש השבועית או עשית פעמיים רצוף. אי אפשר היום.");
+        return;
       }
 
       history.push({ date: today, result });
@@ -148,20 +192,24 @@
       if (weeklyChartInstance) weeklyChartInstance.destroy();
 
       const today = getToday();
-      const startDateStr = getWeekStart(today);
-      const startDate = new Date(startDateStr + "T00:00:00");
+      const weekStartStr = getWeekStart(today);
+      const weekStart = new Date(weekStartStr);
       const history = loadUsage();
 
       const labels = [];
       const dataYes = [];
       const dataNo = [];
+      
+      // Days of week in Hebrew, starting from Tuesday
+      const hebrewDays = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
 
       for (let i = 0; i < 7; i++) {
-        const d = new Date(startDate);
-        d.setDate(startDate.getDate() + i);
-        const label = d.toLocaleDateString('he-IL', { weekday: 'short' });
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
-        labels.push(label);
+        
+        labels.push(hebrewDays[i]);
+        
         const entry = history.find(e => e.date === dateStr);
         dataYes.push(entry && entry.result === "כן" ? 1 : 0);
         dataNo.push(entry && entry.result === "לא" ? 1 : 0);
@@ -195,6 +243,7 @@
               beginAtZero: true,
               max: 1,
               ticks: {
+                stepSize: 1,
                 callback: function(value) {
                   return value === 1 ? 'עשית' : '';
                 }
@@ -208,17 +257,12 @@
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
     document.getElementById("noBtn").onclick = () => addEntry("לא");
     document.getElementById("decideBtn").onclick = () => {
-      const today = getToday();
-      const history = loadUsage();
-      const thisWeek = getCurrentWeek(history, today);
-      const totalYes = thisWeek.filter(e => e.result === "כן").length;
-      const lastTwo = thisWeek.slice(-2).map(e => e.result);
-
-      if (totalYes >= 4 || lastTwo.every(r => r === "כן")) {
-        addEntry("לא");
-      } else {
+      if (canSmokeToday()) {
         const result = Math.random() < 0.5 ? "כן" : "לא";
         addEntry(result);
+      } else {
+        // If can't smoke today, force "no"
+        addEntry("לא");
       }
     };
 
