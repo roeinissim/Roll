@@ -105,17 +105,6 @@
       localStorage.setItem(usageKey, JSON.stringify(history));
     }
 
-    function getCurrentWeek(history, todayStr) {
-      const start = new Date(getWeekStart(todayStr));
-      return Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(start);
-        date.setDate(start.getDate() + i);
-        const dateStr = date.toISOString().split("T")[0];
-        const entry = history.find(e => e.date === dateStr);
-        return entry || { date: dateStr, result: "לא", auto: true };
-      });
-    }
-
     function updateUI() {
       const today = getToday();
       const history = loadUsage();
@@ -164,11 +153,35 @@
       renderChart();
     }
 
+// 1. רק שבוע נוכחי, עם "לא" אוטומטי רק עבור תאריכים <= היום
+function getCurrentWeek(history, todayStr) {
+  const todayDate = parseDateStr(todayStr);
+  const weekStartDate = parseDateStr(getWeekStart(todayStr));
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = addDays(weekStartDate, i);
+    const dateStr = formatDateString(d);
+    const entry = history.find(e => e.date === dateStr);
+    if (entry) {
+      entry.auto = false;
+      return entry;
+    }
+    // אם היום עבר או זה היום עצמו – נניח "לא" אוטומטי
+    if (d <= todayDate) {
+      return { date: dateStr, result: "לא", auto: true };
+    }
+    // אם עתידי – לא מציג כלום (no-bar)
+    return { date: dateStr, result: null, auto: true };
+  });
+}
+
+// 2. גרף שמיירכז כל בר בדיוק במרכז הקטגוריה, בעובי סביר,
+//   ועם ששום בר לא נבנה לימים עתידיים (result === null)
 function renderChart() {
   if (weeklyChartInstance) weeklyChartInstance.destroy();
 
   const today = getToday();
-  const weekStart = new Date(getWeekStart(today));
+  const weekStartStr = getWeekStart(today);
+  const weekStart = parseDateStr(weekStartStr);
   const history = loadUsage();
   const thisWeek = getCurrentWeek(history, today);
 
@@ -176,64 +189,52 @@ function renderChart() {
   const dataYes = [], dataNo = [];
 
   for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    const dateStr = d.toISOString().split("T")[0];
+    const d = addDays(weekStart, i);
+    const dateStr = formatDateString(d);
     const entry = thisWeek.find(e => e.date === dateStr);
-    dataYes.push(entry && entry.result==="כן"?1:0);
-    dataNo.push(entry && entry.result==="לא"?1:0);
+    dataYes.push(entry && entry.result === "כן" ? 1 : 0);
+    dataNo.push(entry && entry.result === "לא" ? 1 : 0);
   }
 
-  const ctx = document.getElementById("weeklyChart").getContext("2d");
-  // כיוון שהcanvas כבר בגודל 400×200, נשאיר maintainAspectRatio:true
+  const ctx = document.getElementById('weeklyChart');
   weeklyChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [
-        {
-          label: "כן",
-          data: dataYes,
-          backgroundColor: "rgba(76,175,80,0.7)",
-          barThickness: 20,
-          categoryPercentage: 0.6,
-          barPercentage: 0.8
-        },
-        {
-          label: "לא",
-          data: dataNo,
-          backgroundColor: "rgba(244,67,54,0.7)",
-          barThickness: 20,
-          categoryPercentage: 0.6,
-          barPercentage: 0.8
-        }
-      ]
-    },
+    type: 'bar',
+    data: { labels, datasets: [
+      {
+        label: 'כן',
+        data: dataYes,
+        backgroundColor: 'rgba(76,175,80,0.7)',
+        barPercentage: 0.5,
+        categoryPercentage: 0.5
+      },
+      {
+        label: 'לא',
+        data: dataNo,
+        backgroundColor: 'rgba(244,67,54,0.7)',
+        barPercentage: 0.5,
+        categoryPercentage: 0.5
+      }
+    ]},
     options: {
       responsive: true,
-      maintainAspectRatio: true,   // חשוב להחזיר אותו ל־true
-      plugins: {
-        legend: { position: "bottom" }
-      },
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom' } },
       scales: {
-        x: {
-          grid: { display: false },
-          // ככה העמודות יהיו מדויקות באמצע כל קטגוריה
-          offset: true
-        },
+        x: { grid: { display: false } },
         y: {
           beginAtZero: true,
           max: 1,
           grid: { display: false },
           ticks: {
             stepSize: 1,
-            callback: v => v === 1 ? "✔" : ""
+            callback: v => v===1?'עשית':''
           }
         }
       }
     }
   });
 }
+
 
 
 
