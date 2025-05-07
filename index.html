@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>הבחירה היומית</title>
+  <title>השליטה של רועי</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -68,37 +68,58 @@
 
   <script>
     let weeklyChartInstance = null;
-    const usageKey = 'usage_history_v5';
-
-    function getIsraeliDate() {
-      // Get the current date in Israel timezone
+    const usageKey = 'usage_history_v6';
+    
+    // Date utility functions
+    function formatDateString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    function addDays(date, days) {
+      const result = new Date(date);
+      result.setDate(date.getDate() + days);
+      return result;
+    }
+    
+    function getToday() {
+      // Get current date in Israel time
       const now = new Date();
       const israelOptions = { timeZone: 'Asia/Jerusalem' };
-      const israelDateStr = now.toLocaleDateString('en-US', israelOptions);
-      const israelDate = new Date(israelDateStr);
-      return israelDate;
+      const israelTime = new Date(now.toLocaleString('en-US', israelOptions));
+      return formatDateString(israelTime);
     }
-
-    function getToday() {
-      const now = getIsraeliDate();
-      return now.toISOString().split('T')[0];
-    }
-
+    
     function getWeekStart(dateStr) {
+      // Convert date string to Date object
       const [year, month, day] = dateStr.split('-').map(Number);
       const date = new Date(year, month - 1, day);
       
-      // Find the previous Tuesday (day 2)
-      let dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, 2 = Tuesday, etc.
+      // Get day of week (0 = Sunday, 1 = Monday, 2 = Tuesday, etc.)
+      const dayOfWeek = date.getDay();
       
-      // Calculate how many days to go back to reach Tuesday
-      // If today is Tuesday (2), go back 0 days
-      // If today is Wednesday (3), go back 1 day
-      // If today is Monday (1), go back 6 days
-      let daysToSubtract = (dayOfWeek + 5) % 7;
+      // Calculate days to subtract to get to the previous Tuesday
+      // Tuesday = 2, so if we're on Tuesday, subtract 0
+      // Wednesday = 3, subtract 1, etc.
+      // Monday = 1, subtract 6
+      const daysToSubtract = (dayOfWeek + 5) % 7;
       
+      // Go back to the beginning of the week (Tuesday)
       date.setDate(date.getDate() - daysToSubtract);
-      return date.toISOString().split('T')[0];
+      
+      return formatDateString(date);
+    }
+    
+    function parseDateStr(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    
+    function formatHebrewDate(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return `${day}.${month}`;
     }
 
     function loadUsage() {
@@ -112,12 +133,6 @@
     function getCurrentWeek(history, todayStr) {
       const weekStart = getWeekStart(todayStr);
       return history.filter(entry => getWeekStart(entry.date) === weekStart);
-    }
-
-    function formatHebrewDate(dateStr) {
-      const [year, month, day] = dateStr.split('-');
-      const date = new Date(year, month - 1, day);
-      return date.toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' });
     }
 
     function updateUI() {
@@ -156,10 +171,18 @@
       }
       
       // Check if already used twice in a row
-      const sortedWeek = [...thisWeek].sort((a, b) => new Date(a.date) - new Date(b.date));
-      const lastTwo = sortedWeek.slice(-2).map(e => e.result);
+      // First, sort the entries by date
+      const sortedEntries = [...thisWeek].sort((a, b) => {
+        const dateA = parseDateStr(a.date);
+        const dateB = parseDateStr(b.date);
+        return dateA - dateB;
+      });
       
-      if (lastTwo.length === 2 && lastTwo[0] === "כן" && lastTwo[1] === "כן") {
+      // Get the last two entries
+      const lastTwo = sortedEntries.slice(-2);
+      
+      // Check if there are two entries and both are "yes"
+      if (lastTwo.length === 2 && lastTwo[0].result === "כן" && lastTwo[1].result === "כן") {
         return false;
       }
       
@@ -193,7 +216,7 @@
 
       const today = getToday();
       const weekStartStr = getWeekStart(today);
-      const weekStart = new Date(weekStartStr);
+      const weekStart = parseDateStr(weekStartStr);
       const history = loadUsage();
 
       const labels = [];
@@ -204,9 +227,8 @@
       const hebrewDays = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
 
       for (let i = 0; i < 7; i++) {
-        const d = new Date(weekStart);
-        d.setDate(weekStart.getDate() + i);
-        const dateStr = d.toISOString().split('T')[0];
+        const d = addDays(weekStart, i);
+        const dateStr = formatDateString(d);
         
         labels.push(hebrewDays[i]);
         
