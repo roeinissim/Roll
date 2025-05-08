@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
@@ -43,6 +42,21 @@
       background-color: #888;
       cursor: not-allowed;
     }
+    .day-buttons {
+      display: inline-block;
+      margin-right: 10px;
+    }
+    .day-buttons button {
+      padding: 5px 10px;
+      font-size: 14px;
+      margin: 0 2px;
+    }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -75,7 +89,7 @@
   </div>
 
   <script>
-    const usageKey = 'usage_history_v8';
+    const usageKey = 'usage_history_v9';
     let weeklyChartInstance = null;
 
     function getToday() {
@@ -130,8 +144,42 @@
       historyList.innerHTML = '';
       thisWeek.slice().reverse().forEach(entry => {
         const div = document.createElement("div");
-        div.innerText = `${formatDate(entry.date)} : ${entry.result}`;
-        if (entry.auto) div.classList.add("auto-entry");
+        div.classList.add("history-item");
+        
+        // Create date and result display
+        const dateResult = document.createElement("div");
+        dateResult.innerText = `${formatDate(entry.date)} : ${entry.result}`;
+        if (entry.auto) dateResult.classList.add("auto-entry");
+        div.appendChild(dateResult);
+        
+        // Add buttons for past days that were auto-filled
+        const todayDate = new Date(today);
+        const entryDate = new Date(entry.date);
+        
+        // Get entry date at start of day and today at start of day for proper comparison
+        const entryDateStart = new Date(entry.date);
+        entryDateStart.setHours(0, 0, 0, 0);
+        const todayDateStart = new Date(today);
+        todayDateStart.setHours(0, 0, 0, 0);
+        
+        // Only show buttons for past auto days (not today and not manually entered)
+        if (entry.auto && entryDateStart < todayDateStart && entry.date !== today) {
+          const btnContainer = document.createElement("div");
+          btnContainer.classList.add("day-buttons");
+          
+          const yesBtn = document.createElement("button");
+          yesBtn.innerText = "כן";
+          yesBtn.addEventListener("click", () => updatePastDay(entry.date, "כן"));
+          
+          const noBtn = document.createElement("button");
+          noBtn.innerText = "לא";
+          noBtn.addEventListener("click", () => updatePastDay(entry.date, "לא"));
+          
+          btnContainer.appendChild(yesBtn);
+          btnContainer.appendChild(noBtn);
+          div.appendChild(btnContainer);
+        }
+        
         historyList.appendChild(div);
       });
 
@@ -140,13 +188,55 @@
       document.getElementById("decideBtn").disabled = !!todayEntry;
     }
 
+    function updatePastDay(dateStr, result) {
+      const today = getToday();
+      const todayDate = new Date(today);
+      const updateDate = new Date(dateStr);
+      
+      // Prevent updating future dates
+      if (updateDate > todayDate) {
+        return;
+      }
+      
+      const history = loadUsage();
+      const existingEntry = history.find(e => e.date === dateStr);
+      
+      if (existingEntry && !existingEntry.auto) {
+        // Entry already exists and is not auto, don't modify
+        return;
+      }
+      
+      // Remove auto entry if exists
+      const filteredHistory = history.filter(e => e.date !== dateStr);
+      
+      // Add new manual entry
+      filteredHistory.push({ date: dateStr, result, auto: false });
+      
+      saveUsage(filteredHistory);
+      updateUI();
+      renderChart();
+    }
+
     function canSmokeToday() {
       const today = getToday();
-      const history = loadUsage().filter(e => !e.auto);
+      const history = loadUsage();
       const thisWeek = getCurrentWeek(history, today);
       const totalYes = thisWeek.filter(e => e.result === "כן").length;
-      const lastTwo = thisWeek.filter(e => e.result === "כן").slice(-2);
-      if (totalYes >= 4 || lastTwo.length === 2) return false;
+      
+      // Find consecutive days with "yes"
+      let consecutiveYes = 0;
+      let maxConsecutiveYes = 0;
+      
+      for (let i = 0; i < thisWeek.length; i++) {
+        if (thisWeek[i].result === "כן") {
+          consecutiveYes++;
+          maxConsecutiveYes = Math.max(maxConsecutiveYes, consecutiveYes);
+        } else {
+          consecutiveYes = 0;
+        }
+      }
+      
+      if (totalYes >= 4 || maxConsecutiveYes >= 2) return false;
       return true;
     }
 
@@ -158,7 +248,7 @@
         alert("עברת את המגבלה השבועית או עשית פעמיים רצוף.");
         return;
       }
-      history.push({ date: today, result });
+      history.push({ date: today, result, auto: false });
       saveUsage(history);
       updateUI();
       renderChart();
@@ -169,6 +259,7 @@
       const today = getToday();
       const weekStart = new Date(getWeekStart(today));
       const history = loadUsage();
+      const thisWeek = getCurrentWeek(history, today);
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
       const dataYes = [], dataNo = [];
@@ -177,7 +268,7 @@
         const d = new Date(weekStart);
         d.setDate(weekStart.getDate() + i);
         const dateStr = d.toISOString().split("T")[0];
-        const entry = history.find(e => e.date === dateStr);
+        const entry = thisWeek.find(e => e.date === dateStr);
         dataYes.push(entry && entry.result === "כן" ? 1 : 0);
         dataNo.push(entry && entry.result === "לא" ? 1 : 0);
       }
