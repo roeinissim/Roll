@@ -204,8 +204,14 @@
     
     .chart-container {
       position: relative;
-      height: 250px;
+      height: 300px; /* Increased from 250px to 300px */
       width: 100%;
+      margin-bottom: 30px; /* Added margin to make room for legend */
+    }
+    
+    .custom-legend {
+      margin-top: 15px;
+      margin-bottom: 10px;
     }
     
     @media (max-width: 600px) {
@@ -224,6 +230,10 @@
       
       #summary {
         font-size: 1.1rem;
+      }
+      
+      .chart-container {
+        height: 250px; /* Slightly reduced for mobile */
       }
     }
     
