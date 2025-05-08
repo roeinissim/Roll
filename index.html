@@ -257,6 +257,7 @@
     function renderChart() {
       if (weeklyChartInstance) weeklyChartInstance.destroy();
       const today = getToday();
+      const todayDate = new Date(today);
       const weekStart = new Date(getWeekStart(today));
       const history = loadUsage();
       const thisWeek = getCurrentWeek(history, today);
@@ -269,8 +270,22 @@
         d.setDate(weekStart.getDate() + i);
         const dateStr = d.toISOString().split("T")[0];
         const entry = thisWeek.find(e => e.date === dateStr);
-        dataYes.push(entry && entry.result === "כן" ? 1 : 0);
-        dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+        
+        // Check if this date is in the future (after today)
+        const currentDate = new Date(dateStr);
+        currentDate.setHours(0, 0, 0, 0);
+        const todayDateStart = new Date(today);
+        todayDateStart.setHours(0, 0, 0, 0);
+        
+        if (currentDate > todayDateStart) {
+          // Future date - don't show any data
+          dataYes.push(null);
+          dataNo.push(null);
+        } else {
+          // Past or today - show the actual data
+          dataYes.push(entry && entry.result === "כן" ? 1 : 0);
+          dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+        }
       }
 
       const ctx = document.getElementById("weeklyChart");
