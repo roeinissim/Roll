@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>בחירה יומית</title>
+  <title>השליטה של רועי</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -247,7 +247,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>שלום רועי!</h1>
+    <h1>השליטה של רועי</h1>
 
     <div class="card today-actions" id="todayCard">
       <h3>החלטה יומית</h3>
@@ -481,19 +481,20 @@
         const dateStr = d.toISOString().split("T")[0];
         const entry = thisWeek.find(e => e.date === dateStr);
         
-        // Check if this date is in the future (after today)
+        // Check if this date is in the future or is today but no choice made yet
         const currentDate = new Date(dateStr);
         currentDate.setHours(0, 0, 0, 0);
         const todayDateStart = new Date(today);
         todayDateStart.setHours(0, 0, 0, 0);
+        const isTodayWithChoice = dateStr === today && todayEntry;
         
-        if (currentDate > todayDateStart) {
-          // Future date - don't show any data
+        if (currentDate > todayDateStart || (dateStr === today && !todayEntry)) {
+          // Future date or today with no choice yet - don't show any data
           dataYes.push(null);
           dataNo.push(null);
           dataAuto.push(null);
         } else {
-          // Today or past days - show the actual data
+          // Past days or today with choice made - show the actual data
           if (entry.result === "כן") {
             dataYes.push(1);
             dataNo.push(0);
