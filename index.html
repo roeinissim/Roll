@@ -469,15 +469,9 @@
       const todayEntry = history.find(e => e.date === today);
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
-      const datasets = [];
       
-      // Create arrays for each type of data
-      const dataPoints = Array(7).fill().map(() => ({
-        yes: 0,
-        no: 0,
-        auto: 0
-      }));
-      
+      // Prepare data for each day
+      const data = [];
       for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart);
         d.setDate(weekStart.getDate() + i);
@@ -492,71 +486,79 @@
         
         if (currentDate > todayDateStart || (dateStr === today && !todayEntry)) {
           // Future date or today with no choice yet - don't show any data
-          dataPoints[i] = { yes: null, no: null, auto: null };
+          data.push(null);
         } else {
-          // Past days or today with choice made - show the actual data
+          // Show appropriate data based on the entry
           if (entry.result === "כן") {
-            dataPoints[i].yes = 1;
+            data.push({
+              yes: 1,
+              no: 0,
+              auto: 0,
+              actualResult: "כן"
+            });
           } else if (entry.result === "לא" && !entry.auto) {
-            dataPoints[i].no = 1;
+            data.push({
+              yes: 0,
+              no: 1,
+              auto: 0,
+              actualResult: "לא"
+            });
           } else if (entry.auto) {
-            dataPoints[i].auto = 1;
+            data.push({
+              yes: 0,
+              no: 0,
+              auto: 1,
+              actualResult: "אוטומטי"
+            });
           }
         }
       }
-      
-      // Create the datasets array with data from our dataPoints array
-      datasets.push({
-        label: "כן", 
-        data: dataPoints.map(dp => dp.yes),
-        backgroundColor: "rgba(58, 140, 58, 0.7)",
-        borderColor: "rgba(58, 140, 58, 1)",
-        borderWidth: 1,
-        barPercentage: 0.6, // Adjust this value for bar width
-        categoryPercentage: 0.8, // Adjust this value for spacing
-        order: 1
-      });
-      
-      datasets.push({
-        label: "לא", 
-        data: dataPoints.map(dp => dp.no),
-        backgroundColor: "rgba(184, 50, 50, 0.7)",
-        borderColor: "rgba(184, 50, 50, 1)",
-        borderWidth: 1,
-        barPercentage: 0.6, // Adjust this value for bar width
-        categoryPercentage: 0.8, // Adjust this value for spacing
-        order: 2
-      });
-      
-      datasets.push({
-        label: "אוטומטי", 
-        data: dataPoints.map(dp => dp.auto),
-        backgroundColor: "rgba(112, 112, 112, 0.5)",
-        borderColor: "rgba(112, 112, 112, 0.8)",
-        borderWidth: 1,
-        barPercentage: 0.6, // Adjust this value for bar width
-        categoryPercentage: 0.8, // Adjust this value for spacing
-        order: 3
-      });
 
       const ctx = document.getElementById("weeklyChart");
       weeklyChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
           labels,
-          datasets
+          datasets: [
+            {
+              // Single dataset with stacked bars
+              data: data.map((d, i) => d ? 1 : null),
+              backgroundColor: data.map(d => {
+                if (!d) return 'rgba(0,0,0,0)';
+                if (d.actualResult === "כן") return "rgba(58, 140, 58, 0.7)";
+                if (d.actualResult === "לא") return "rgba(184, 50, 50, 0.7)";
+                return "rgba(112, 112, 112, 0.5)";
+              }),
+              borderColor: data.map(d => {
+                if (!d) return 'rgba(0,0,0,0)';
+                if (d.actualResult === "כן") return "rgba(58, 140, 58, 1)";
+                if (d.actualResult === "לא") return "rgba(184, 50, 50, 1)";
+                return "rgba(112, 112, 112, 0.8)";
+              }),
+              borderWidth: 1,
+              barPercentage: 0.5,
+              categoryPercentage: 0.9
+            }
+          ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { 
             legend: { 
-              position: "bottom",
-              labels: {
-                padding: 20,
-                usePointStyle: true,
-                font: {
-                  size: 14
+              display: false // Hide the default legend
+            },
+            tooltip: {
+              callbacks: {
+                title: function(tooltipItems) {
+                  const dayIndex = tooltipItems[0].dataIndex;
+                  if (data[dayIndex]) {
+                    return data[dayIndex].actualResult + ' - ' + labels[dayIndex];
+                  }
+                  return labels[dayIndex];
+                },
+                label: function() {
+                  return ""; // No label needed
                 }
               }
             }
@@ -581,6 +583,53 @@
           }
         }
       });
+      
+      // Add custom legend
+      const legendContainer = document.createElement('div');
+      legendContainer.style.display = 'flex';
+      legendContainer.style.justifyContent = 'center';
+      legendContainer.style.margin = '10px 0';
+      legendContainer.style.gap = '15px';
+      
+      const legendItems = [
+        { label: "כן", color: "rgba(58, 140, 58, 0.7)" },
+        { label: "לא", color: "rgba(184, 50, 50, 0.7)" },
+        { label: "אוטומטי", color: "rgba(112, 112, 112, 0.5)" }
+      ];
+      
+      legendItems.forEach(item => {
+        const legendItem = document.createElement('div');
+        legendItem.style.display = 'flex';
+        legendItem.style.alignItems = 'center';
+        
+        const colorBox = document.createElement('div');
+        colorBox.style.width = '12px';
+        colorBox.style.height = '12px';
+        colorBox.style.background = item.color;
+        colorBox.style.marginRight = '5px';
+        colorBox.style.borderRadius = '2px';
+        
+        const label = document.createElement('span');
+        label.textContent = item.label;
+        label.style.fontSize = '14px';
+        
+        legendItem.appendChild(colorBox);
+        legendItem.appendChild(label);
+        legendContainer.appendChild(legendItem);
+      });
+      
+      // Find the chart canvas and append the legend after it
+      const chartCanvas = document.getElementById('weeklyChart');
+      const chartContainer = chartCanvas.parentNode;
+      
+      // Check if legend already exists and remove it
+      const existingLegend = chartContainer.querySelector('.custom-legend');
+      if (existingLegend) {
+        chartContainer.removeChild(existingLegend);
+      }
+      
+      legendContainer.className = 'custom-legend';
+      chartContainer.appendChild(legendContainer);
     }
 
     function showNotification(message) {
