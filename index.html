@@ -4,92 +4,286 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>בחירה יומית</title>
-  <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Secular+One&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --primary: #3a6b6b;
+      --primary-light: #4e8e8e;
+      --primary-dark: #2d5555;
+      --bg-dark: #1c2024;
+      --bg-card: #262e36;
+      --text-primary: #e0e0e0;
+      --text-secondary: #aaaaaa;
+      --accent-yes: #3a8c3a;
+      --accent-no: #b83232;
+      --accent-auto: #707070;
+      --border-light: rgba(255, 255, 255, 0.05);
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
     body {
       margin: 0;
-      font-family: 'Secular One', sans-serif;
-      background: #1c1f26;
-      color: white;
+      font-family: 'Rubik', 'Secular One', sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark), #242a34);
+      background-attachment: fixed;
+      color: var(--text-primary);
       text-align: center;
       padding: 20px;
+      line-height: 1.6;
+      min-height: 100vh;
     }
+    
+    h1 {
+      font-family: 'Secular One', sans-serif;
+      font-size: 2.5rem;
+      margin: 1rem 0;
+      color: var(--primary-light);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    h3 {
+      font-family: 'Secular One', sans-serif;
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: var(--primary-light);
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
     .card {
-      background-color: rgba(32, 64, 72, 0.5);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 16px auto;
-      max-width: 600px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background-color: var(--bg-card);
+      border-radius: 12px;
+      padding: 25px;
+      margin: 25px auto;
+      max-width: 100%;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-light);
+      transition: transform 0.2s ease;
     }
+    
+    .card:hover {
+      transform: translateY(-3px);
+    }
+    
     .auto-entry {
       opacity: 0.5;
     }
+    
     button {
-      padding: 12px 24px;
-      font-size: 18px;
-      border-radius: 12px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 8px;
       border: none;
-      background-color: #4ea3a3;
+      background-color: var(--primary);
       color: white;
       cursor: pointer;
-      margin: 5px;
+      margin: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s ease;
+      font-family: 'Rubik', sans-serif;
+      font-weight: 500;
     }
+    
+    button:hover {
+      background-color: var(--primary-light);
+      transform: translateY(-2px);
+    }
+    
+    button:active {
+      transform: translateY(1px);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
     button:disabled {
-      background-color: #888;
+      background-color: #555;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+      opacity: 0.7;
     }
+    
+    .btn-yes {
+      background-color: var(--accent-yes);
+    }
+    
+    .btn-yes:hover {
+      background-color: #4a9c4a;
+    }
+    
+    .btn-no {
+      background-color: var(--accent-no);
+    }
+    
+    .btn-no:hover {
+      background-color: #c84242;
+    }
+    
+    .btn-decide {
+      background-color: #6a4c93;
+    }
+    
+    .btn-decide:hover {
+      background-color: #7a5ca3;
+    }
+    
+    .btn-reset {
+      background-color: #455a64;
+      font-size: 14px;
+      padding: 8px 16px;
+    }
+    
+    .btn-reset:hover {
+      background-color: #546e7a;
+    }
+    
     .day-buttons {
       display: inline-block;
       margin-right: 10px;
     }
+    
     .day-buttons button {
-      padding: 5px 10px;
-      font-size: 14px;
+      padding: 4px 12px;
+      font-size: 13px;
       margin: 0 2px;
     }
+    
     .history-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.03);
+      transition: background-color 0.2s ease;
+    }
+    
+    .history-item:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .history-yes {
+      border-right: 3px solid var(--accent-yes);
+    }
+    
+    .history-no {
+      border-right: 3px solid var(--accent-no);
+    }
+    
+    .history-auto {
+      border-right: 3px solid var(--accent-auto);
+    }
+    
+    #summary {
+      font-size: 1.4rem;
+      margin-bottom: 10px;
+      font-weight: 500;
+    }
+    
+    #message {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+    }
+    
+    .main-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 250px;
+      width: 100%;
+    }
+    
+    @media (max-width: 600px) {
+      .card {
+        padding: 20px 15px;
+      }
+      
+      button {
+        padding: 8px 16px;
+        font-size: 14px;
+      }
+      
+      h1 {
+        font-size: 1.8rem;
+      }
+      
+      #summary {
+        font-size: 1.1rem;
+      }
+    }
+    
+    /* Pulse animation for today's action reminder */
+    @keyframes pulse {
+      0% {
+        box-shadow: 0 0 0 0 rgba(78, 142, 142, 0.4);
+      }
+      70% {
+        box-shadow: 0 0 0 8px rgba(78, 142, 142, 0);
+      }
+      100% {
+        box-shadow: 0 0 0 0 rgba(78, 142, 142, 0);
+      }
+    }
+    
+    .today-actions {
+      animation: pulse 2s infinite;
     }
   </style>
 </head>
 <body>
-  <h1>שלום רועי!</h1>
+  <div class="container">
+    <h1>שלום רועי!</h1>
 
-  <div class="card">
-    <p>מה תעשה היום?</p>
-    <button id="yesBtn">כן, היום כן</button>
-    <button id="noBtn">לא, היום לא</button>
-    <button id="decideBtn">תחליט בשבילי</button>
-  </div>
+    <div class="card today-actions" id="todayCard">
+      <h3>החלטה יומית</h3>
+      <p>מה תעשה היום?</p>
+      <div class="main-actions">
+        <button id="yesBtn" class="btn-yes">כן, היום כן</button>
+        <button id="noBtn" class="btn-no">לא, היום לא</button>
+        <button id="decideBtn" class="btn-decide">תחליט בשבילי</button>
+      </div>
+    </div>
 
-  <div class="card">
-    <p id="summary"></p>
-    <p id="message"></p>
-  </div>
+    <div class="card">
+      <h3>סיכום שבועי</h3>
+      <p id="summary"></p>
+      <p id="message"></p>
+    </div>
 
-  <div class="card">
-    <h3>היסטוריה שבועית</h3>
-    <div id="historyList"></div>
-  </div>
+    <div class="card">
+      <h3>היסטוריה שבועית</h3>
+      <div id="historyList"></div>
+    </div>
 
-  <div class="card">
-    <h3>פירוט שבועי (גרף)</h3>
-    <canvas id="weeklyChart" width="400" height="200"></canvas>
-  </div>
+    <div class="card">
+      <h3>פירוט שבועי (גרף)</h3>
+      <div class="chart-container">
+        <canvas id="weeklyChart"></canvas>
+      </div>
+    </div>
 
-  <div class="card">
-    <button onclick="confirmReset()">איפוס כל הנתונים</button>
+    <div class="card">
+      <button onclick="confirmReset()" class="btn-reset">איפוס כל הנתונים</button>
+    </div>
   </div>
 
   <script>
-    const usageKey = 'usage_history_v9';
+    const usageKey = 'usage_history_v10';
     let weeklyChartInstance = null;
 
     function getToday() {
@@ -139,13 +333,25 @@
       const todayEntry = history.find(e => e.date === today);
 
       document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4`;
-      document.getElementById("message").innerText = todayEntry ? `החלטת היום: ${todayEntry.result}` : "";
+      document.getElementById("message").innerText = todayEntry ? `החלטת היום: ${todayEntry.result}` : "עדיין לא בחרת היום";
+      
+      // Update today card animation
+      document.getElementById("todayCard").classList.toggle("today-actions", !todayEntry);
 
       const historyList = document.getElementById("historyList");
       historyList.innerHTML = '';
       thisWeek.slice().reverse().forEach(entry => {
         const div = document.createElement("div");
         div.classList.add("history-item");
+        
+        // Add specific class based on the result
+        if (entry.result === "כן") {
+          div.classList.add("history-yes");
+        } else if (entry.result === "לא" && !entry.auto) {
+          div.classList.add("history-no");
+        } else if (entry.auto) {
+          div.classList.add("history-auto");
+        }
         
         // Create date and result display
         const dateResult = document.createElement("div");
@@ -164,16 +370,18 @@
         todayDateStart.setHours(0, 0, 0, 0);
         
         // Only show buttons for past auto days (not today and not manually entered)
-        if (entry.auto && entryDateStart < todayDateStart && entry.date !== today) {
+        if (entry.auto && entryDateStart < todayDateStart) {
           const btnContainer = document.createElement("div");
           btnContainer.classList.add("day-buttons");
           
           const yesBtn = document.createElement("button");
           yesBtn.innerText = "כן";
+          yesBtn.classList.add("btn-yes");
           yesBtn.addEventListener("click", () => updatePastDay(entry.date, "כן"));
           
           const noBtn = document.createElement("button");
           noBtn.innerText = "לא";
+          noBtn.classList.add("btn-no");
           noBtn.addEventListener("click", () => updatePastDay(entry.date, "לא"));
           
           btnContainer.appendChild(yesBtn);
@@ -246,7 +454,7 @@
       const history = loadUsage();
       if (history.find(e => e.date === today)) return;
       if (result === "כן" && !canSmokeToday()) {
-        alert("עברת את המגבלה השבועית או עשית פעמיים רצוף.");
+        showNotification("עברת את המגבלה השבועית או עשית פעמיים רצוף.");
         return;
       }
       history.push({ date: today, result, auto: false });
@@ -262,6 +470,7 @@
       const weekStart = new Date(getWeekStart(today));
       const history = loadUsage();
       const thisWeek = getCurrentWeek(history, today);
+      const todayEntry = history.find(e => e.date === today);
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
       const dataYes = [], dataNo = [], dataAuto = [];
@@ -272,19 +481,19 @@
         const dateStr = d.toISOString().split("T")[0];
         const entry = thisWeek.find(e => e.date === dateStr);
         
-        // Check if this date is in the future (after today) or is today
+        // Check if this date is in the future (after today)
         const currentDate = new Date(dateStr);
         currentDate.setHours(0, 0, 0, 0);
         const todayDateStart = new Date(today);
         todayDateStart.setHours(0, 0, 0, 0);
         
-        if (currentDate > todayDateStart || dateStr === today) {
-          // Future date or current day - don't show any data
+        if (currentDate > todayDateStart) {
+          // Future date - don't show any data
           dataYes.push(null);
           dataNo.push(null);
           dataAuto.push(null);
         } else {
-          // Past days - show the actual data
+          // Today or past days - show the actual data
           if (entry.result === "כן") {
             dataYes.push(1);
             dataNo.push(0);
@@ -308,23 +517,102 @@
         data: {
           labels,
           datasets: [
-            { label: "כן", data: dataYes, backgroundColor: "rgba(76, 175, 80, 0.7)" },
-            { label: "לא", data: dataNo, backgroundColor: "rgba(244, 67, 54, 0.7)" },
-            { label: "אוטומטי", data: dataAuto, backgroundColor: "rgba(158, 158, 158, 0.5)" }
+            { 
+              label: "כן", 
+              data: dataYes, 
+              backgroundColor: "rgba(58, 140, 58, 0.7)",
+              borderColor: "rgba(58, 140, 58, 1)",
+              borderWidth: 1
+            },
+            { 
+              label: "לא", 
+              data: dataNo, 
+              backgroundColor: "rgba(184, 50, 50, 0.7)",
+              borderColor: "rgba(184, 50, 50, 1)",
+              borderWidth: 1
+            },
+            { 
+              label: "אוטומטי", 
+              data: dataAuto, 
+              backgroundColor: "rgba(112, 112, 112, 0.5)",
+              borderColor: "rgba(112, 112, 112, 0.8)",
+              borderWidth: 1
+            }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { position: "bottom" } },
+          maintainAspectRatio: false,
+          plugins: { 
+            legend: { 
+              position: "bottom",
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                font: {
+                  size: 14
+                }
+              }
+            }
+          },
           scales: {
             y: {
               beginAtZero: true,
               max: 1,
-              ticks: { stepSize: 1, callback: v => v === 1 ? '✔' : '' }
+              ticks: { 
+                stepSize: 1, 
+                callback: v => v === 1 ? '✔' : '' 
+              },
+              grid: {
+                color: "rgba(255, 255, 255, 0.05)"
+              }
+            },
+            x: {
+              grid: {
+                color: "rgba(255, 255, 255, 0.05)"
+              }
             }
           }
         }
       });
+    }
+
+    function showNotification(message) {
+      // Create notification element
+      const notification = document.createElement("div");
+      notification.style.position = "fixed";
+      notification.style.bottom = "20px";
+      notification.style.right = "20px";
+      notification.style.backgroundColor = "rgba(184, 50, 50, 0.9)";
+      notification.style.color = "white";
+      notification.style.padding = "15px 20px";
+      notification.style.borderRadius = "8px";
+      notification.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.3)";
+      notification.style.zIndex = "1000";
+      notification.style.transition = "all 0.3s ease";
+      notification.style.transform = "translateY(100px)";
+      notification.style.fontFamily = "'Rubik', sans-serif";
+      notification.style.fontWeight = "500";
+      
+      // Add message
+      notification.textContent = message;
+      
+      // Add to document
+      document.body.appendChild(notification);
+      
+      // Fade in
+      setTimeout(() => {
+        notification.style.transform = "translateY(0)";
+      }, 10);
+      
+      // Remove after delay
+      setTimeout(() => {
+        notification.style.transform = "translateY(100px)";
+        notification.style.opacity = "0";
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
     }
 
     function confirmReset() {
@@ -332,6 +620,7 @@
         localStorage.removeItem(usageKey);
         updateUI();
         renderChart();
+        showNotification("כל הנתונים אופסו בהצלחה");
       }
     }
 
