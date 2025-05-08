@@ -469,8 +469,15 @@
       const todayEntry = history.find(e => e.date === today);
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
-      const dataYes = [], dataNo = [], dataAuto = [];
-
+      const datasets = [];
+      
+      // Create arrays for each type of data
+      const dataPoints = Array(7).fill().map(() => ({
+        yes: 0,
+        no: 0,
+        auto: 0
+      }));
+      
       for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart);
         d.setDate(weekStart.getDate() + i);
@@ -482,60 +489,62 @@
         currentDate.setHours(0, 0, 0, 0);
         const todayDateStart = new Date(today);
         todayDateStart.setHours(0, 0, 0, 0);
-        const isTodayWithChoice = dateStr === today && todayEntry;
         
         if (currentDate > todayDateStart || (dateStr === today && !todayEntry)) {
           // Future date or today with no choice yet - don't show any data
-          dataYes.push(null);
-          dataNo.push(null);
-          dataAuto.push(null);
+          dataPoints[i] = { yes: null, no: null, auto: null };
         } else {
           // Past days or today with choice made - show the actual data
           if (entry.result === "כן") {
-            dataYes.push(1);
-            dataNo.push(0);
-            dataAuto.push(0);
+            dataPoints[i].yes = 1;
           } else if (entry.result === "לא" && !entry.auto) {
-            dataYes.push(0);
-            dataNo.push(1);
-            dataAuto.push(0);
+            dataPoints[i].no = 1;
           } else if (entry.auto) {
-            // Auto entry (no decision made)
-            dataYes.push(0);
-            dataNo.push(0);
-            dataAuto.push(1);
+            dataPoints[i].auto = 1;
           }
         }
       }
+      
+      // Create the datasets array with data from our dataPoints array
+      datasets.push({
+        label: "כן", 
+        data: dataPoints.map(dp => dp.yes),
+        backgroundColor: "rgba(58, 140, 58, 0.7)",
+        borderColor: "rgba(58, 140, 58, 1)",
+        borderWidth: 1,
+        barPercentage: 0.6, // Adjust this value for bar width
+        categoryPercentage: 0.8, // Adjust this value for spacing
+        order: 1
+      });
+      
+      datasets.push({
+        label: "לא", 
+        data: dataPoints.map(dp => dp.no),
+        backgroundColor: "rgba(184, 50, 50, 0.7)",
+        borderColor: "rgba(184, 50, 50, 1)",
+        borderWidth: 1,
+        barPercentage: 0.6, // Adjust this value for bar width
+        categoryPercentage: 0.8, // Adjust this value for spacing
+        order: 2
+      });
+      
+      datasets.push({
+        label: "אוטומטי", 
+        data: dataPoints.map(dp => dp.auto),
+        backgroundColor: "rgba(112, 112, 112, 0.5)",
+        borderColor: "rgba(112, 112, 112, 0.8)",
+        borderWidth: 1,
+        barPercentage: 0.6, // Adjust this value for bar width
+        categoryPercentage: 0.8, // Adjust this value for spacing
+        order: 3
+      });
 
       const ctx = document.getElementById("weeklyChart");
       weeklyChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
           labels,
-          datasets: [
-            { 
-              label: "כן", 
-              data: dataYes, 
-              backgroundColor: "rgba(58, 140, 58, 0.7)",
-              borderColor: "rgba(58, 140, 58, 1)",
-              borderWidth: 1
-            },
-            { 
-              label: "לא", 
-              data: dataNo, 
-              backgroundColor: "rgba(184, 50, 50, 0.7)",
-              borderColor: "rgba(184, 50, 50, 1)",
-              borderWidth: 1
-            },
-            { 
-              label: "אוטומטי", 
-              data: dataAuto, 
-              backgroundColor: "rgba(112, 112, 112, 0.5)",
-              borderColor: "rgba(112, 112, 112, 0.8)",
-              borderWidth: 1
-            }
-          ]
+          datasets
         },
         options: {
           responsive: true,
