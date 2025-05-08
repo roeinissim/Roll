@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>השליטה של רועי</title>
+  <title>בחירה יומית</title>
   <link href="https://fonts.googleapis.com/css2?family=Secular+One&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -134,7 +134,8 @@
       const today = getToday();
       const history = loadUsage();
       const thisWeek = getCurrentWeek(history, today);
-      const totalYes = thisWeek.filter(e => e.result === "כן").length;
+      const realEntries = thisWeek.filter(e => !e.auto);
+      const totalYes = realEntries.filter(e => e.result === "כן").length;
       const todayEntry = history.find(e => e.date === today);
 
       document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4`;
@@ -263,7 +264,7 @@
       const thisWeek = getCurrentWeek(history, today);
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
-      const dataYes = [], dataNo = [];
+      const dataYes = [], dataNo = [], dataAuto = [];
 
       for (let i = 0; i < 7; i++) {
         const d = new Date(weekStart);
@@ -271,20 +272,33 @@
         const dateStr = d.toISOString().split("T")[0];
         const entry = thisWeek.find(e => e.date === dateStr);
         
-        // Check if this date is in the future (after today)
+        // Check if this date is in the future (after today) or is today
         const currentDate = new Date(dateStr);
         currentDate.setHours(0, 0, 0, 0);
         const todayDateStart = new Date(today);
         todayDateStart.setHours(0, 0, 0, 0);
         
-        if (currentDate > todayDateStart) {
-          // Future date - don't show any data
+        if (currentDate > todayDateStart || dateStr === today) {
+          // Future date or current day - don't show any data
           dataYes.push(null);
           dataNo.push(null);
+          dataAuto.push(null);
         } else {
-          // Past or today - show the actual data
-          dataYes.push(entry && entry.result === "כן" ? 1 : 0);
-          dataNo.push(entry && entry.result === "לא" ? 1 : 0);
+          // Past days - show the actual data
+          if (entry.result === "כן") {
+            dataYes.push(1);
+            dataNo.push(0);
+            dataAuto.push(0);
+          } else if (entry.result === "לא" && !entry.auto) {
+            dataYes.push(0);
+            dataNo.push(1);
+            dataAuto.push(0);
+          } else if (entry.auto) {
+            // Auto entry (no decision made)
+            dataYes.push(0);
+            dataNo.push(0);
+            dataAuto.push(1);
+          }
         }
       }
 
@@ -295,7 +309,8 @@
           labels,
           datasets: [
             { label: "כן", data: dataYes, backgroundColor: "rgba(76, 175, 80, 0.7)" },
-            { label: "לא", data: dataNo, backgroundColor: "rgba(244, 67, 54, 0.7)" }
+            { label: "לא", data: dataNo, backgroundColor: "rgba(244, 67, 54, 0.7)" },
+            { label: "אוטומטי", data: dataAuto, backgroundColor: "rgba(158, 158, 158, 0.5)" }
           ]
         },
         options: {
