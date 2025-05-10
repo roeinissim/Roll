@@ -432,7 +432,8 @@
       renderChart();
     }
 
-    function canSmokeToday() {
+// Replace the current canSmokeToday function
+function canSmokeToday() {
   const today = getToday();
   const history = loadUsage();
   const thisWeek = getCurrentWeek(history, today);
@@ -454,20 +455,12 @@
     }
   }
   
-  // Also check if today would create consecutive days
-  const yesterdayIndex = thisWeek.findIndex(e => e.date === today) - 1;
-  if (yesterdayIndex >= 0 && thisWeek[yesterdayIndex].result === "כן" && !thisWeek[yesterdayIndex].auto) {
-    // Yesterday was a real "yes"
-    const dayBeforeYesterdayIndex = yesterdayIndex - 1;
-    if (dayBeforeYesterdayIndex >= 0 && thisWeek[dayBeforeYesterdayIndex].result === "כן" && !thisWeek[dayBeforeYesterdayIndex].auto) {
-      // But no need to check further than 2 days in a row
-      return false;
-    }
-  }
-  
   if (totalYes >= 4 || maxConsecutiveYes >= 2) return false;
   return true;
 }
+
+// Execute the function to see if it returns the correct result now
+console.log("Can smoke today:", canSmokeToday());
 
     function addEntry(result) {
       const today = getToday();
