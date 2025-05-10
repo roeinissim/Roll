@@ -288,7 +288,7 @@
   </div>
 
   <script>
-    const usageKey = 'usage_history_v12'; // Incremented version due to logic philosophy change
+    const usageKey = 'usage_history_v12'; // Keeping same version as philosophy change was the main thing
     let weeklyChartInstance = null;
 
     function getToday() {
@@ -325,7 +325,6 @@
 
     function saveUsage(history) {
       try {
-        // Sort history by date before saving to ensure consistency (optional but good practice)
         const sortedHistory = history.sort((a, b) => a.date.localeCompare(b.date));
         localStorage.setItem(usageKey, JSON.stringify(sortedHistory));
       } catch (e) {
@@ -391,7 +390,9 @@
         const todayDate = new Date(today);
         todayDate.setHours(0,0,0,0);
 
-        if (entryDate <= todayDate) { // Allow editing for today (if auto) or any past day
+        // *** CHANGED CONDITION HERE ***
+        // Only show buttons for days strictly BEFORE today
+        if (entryDate < todayDate) { 
           const btnContainer = document.createElement("div");
           btnContainer.classList.add("day-buttons");
           
@@ -417,18 +418,12 @@
       document.getElementById("decideBtn").disabled = !!todayEntry;
     }
 
-    // Helper to check rules for a given date if it were to be "כן"
-    // This function is used by canSmokeToday to make decisions for the CURRENT day.
-    // It looks at the *actual* history, which might contain past rule violations.
     function checkRulesForDate(dateToCheckStr, newResultIfYes, fullHistory) {
         if (newResultIfYes !== "כן") return { valid: true }; 
 
-        // Create a temporary history reflecting the potential change for dateToCheckStr
-        // This is important if dateToCheckStr already exists and is being changed.
         const historyExcludingTargetDay = fullHistory.filter(e => e.date !== dateToCheckStr);
         const potentialHistory = [...historyExcludingTargetDay, { date: dateToCheckStr, result: "כן", auto: false }];
 
-        // 1. Check weekly limit
         const weekStartStr = getWeekStart(dateToCheckStr);
         const weekStartDate = new Date(weekStartStr);
         let yesInWeekCount = 0;
@@ -442,33 +437,25 @@
                 yesInWeekCount++;
             }
         }
-        if (yesInWeekCount > 4) { // The count already includes the potential 'yes' for dateToCheckStr
+        if (yesInWeekCount > 4) {
             return { valid: false, reason: `לא ניתן לבחור 'כן'. יעבור את המגבלה השבועית של 4 (יהיו ${yesInWeekCount}).` };
         }
 
-        // 2. Check consecutive days rule based on potentialHistory
         const targetDate = new Date(dateToCheckStr);
-        
         const prevDate = new Date(targetDate);
         prevDate.setDate(targetDate.getDate() - 1);
         const prevDateStr = prevDate.toISOString().split("T")[0];
         const prevEntry = potentialHistory.find(e => e.date === prevDateStr && !e.auto && e.result === "כן");
         
-        // We only care if *both* prevDate and dateToCheckStr are "כן"
-        if (prevEntry && dateToCheckStr !== prevDateStr) { // Second condition prevents self-comparison if only one entry in history
-             // Check if prevEntry is indeed the day before dateToCheckStr and is "כן"
+        if (prevEntry && dateToCheckStr !== prevDateStr) { 
             const entryForDateToCheck = potentialHistory.find(e=> e.date === dateToCheckStr && e.result === "כן");
-            if(entryForDateToCheck){ // If current day is also "yes"
+            if(entryForDateToCheck){ 
                  return { valid: false, reason: "לא ניתן לבחור 'כן' יום אחרי יום 'כן' קודם." };
             }
         }
-        // No need to check nextDay for canSmokeToday logic, as that would be validating a future choice.
-        // The consecutive rule for canSmokeToday is "was yesterday 'yes'?"
-        
         return { valid: true };
     }
 
-    // updatePastDay: Allows users to set past days to reflect reality, without rule validation for the past.
     function updatePastDay(dateStr, result) {
       const actualToday = getToday();
       const updateDate = new Date(dateStr);
@@ -476,8 +463,13 @@
       const actualTodayDate = new Date(actualToday);
       actualTodayDate.setHours(0,0,0,0);
 
-      if (updateDate > actualTodayDate && dateStr !== actualToday) { // Allow editing today even if it's "future" by a few hours
-        showNotification("לא ניתן לעדכן ימים עתידייים (מלבד היום).");
+      // This check is now mostly for future dates, as UI won't call it for actualToday.
+      if (updateDate > actualTodayDate) { 
+        showNotification("לא ניתן לעדכן ימים עתידייים.");
+        return;
+      }
+       if (updateDate >= actualTodayDate) { // Also prevent updating today via this function
+        showNotification("יש להשתמש בכפתורים הראשיים להחלטה יומית.");
         return;
       }
       
@@ -485,13 +477,11 @@
       const existingEntry = history.find(e => e.date === dateStr);
 
       if (existingEntry && !existingEntry.auto && existingEntry.result === result) {
-        // No change if trying to set to the same manual value
         return; 
       }
       
-      // Remove any existing entry for this date (auto or manual)
       const filteredHistory = history.filter(e => e.date !== dateStr);
-      filteredHistory.push({ date: dateStr, result, auto: false }); // New entry is manual
+      filteredHistory.push({ date: dateStr, result, auto: false }); 
       
       saveUsage(filteredHistory);
       updateUI();
@@ -499,18 +489,15 @@
       showNotification(`היום ${formatDate(dateStr)} עודכן ל: ${result}`);
     }
 
-    // canSmokeToday: Strictly enforces rules for *today's* decision, based on actual history.
     function canSmokeToday() {
       const today = getToday();
       const history = loadUsage();
-      // The `checkRulesForDate` will evaluate if making *today* "כן" is valid given the current history.
       const validation = checkRulesForDate(today, "כן", history); 
       if (!validation.valid) {
         showNotification(validation.reason || "עברת את המגבלה השבועית או שיש יום 'כן' רצוף.");
       }
       return validation.valid;
     }
-
 
     function addEntry(result) {
       const today = getToday();
@@ -523,7 +510,6 @@
       }
       
       if (result === "כן" && !canSmokeToday()) {
-        // Notification is shown by canSmokeToday if it returns false
         return;
       }
       
@@ -553,11 +539,11 @@
         if (entryDate > todayDateObj) { 
             data.push(null);
         } else {
-            if (entry.result === "כן") { // Includes manually set past "yes" even if rule-breaking
+            if (entry.result === "כן") { 
                 data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
             } else if (entry.result === "לא" && !entry.auto) { 
                 data.push({ value: 1, actualResult: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
-            } else { // Auto "לא"
+            } else { 
                 data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
             }
         }
@@ -648,8 +634,8 @@
       notification.id = "custom-notification";
       notification.style.position = "fixed";
       notification.style.bottom = "20px";
-      notification.style.right = "20px"; // For RTL, this will be on the left. Consider `left: "20px"` if you want it on the browser's right.
-      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)";
+      notification.style.right = "20px"; 
+      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") || message.includes("יש להשתמש") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)";
       notification.style.color = "white";
       notification.style.padding = "15px 20px";
       notification.style.borderRadius = "8px";
