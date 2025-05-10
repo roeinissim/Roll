@@ -433,53 +433,38 @@
     }
 
     function canSmokeToday() {
-      const today = getToday();
+      const today = getToday(); // today is a string like "YYYY-MM-DD"
       const history = loadUsage();
       const weekStart = getWeekStart(today);
-      
-      // Only consider real (non-auto) entries for this week
-      const thisWeekEntries = history.filter(e => 
+
+      // Get non-auto entries for this week, up to and including today.
+      // IMPORTANT: addEntry() calls canSmokeToday() *before* an entry for `today` exists in history.
+      // So, `thisWeekEntries` effectively contains entries up to *yesterday* relative to the decision being made for `today`.
+      const thisWeekEntries = history.filter(e =>
         !e.auto && e.date >= weekStart && e.date <= today
       );
-      
-      // Count yes entries
+
+      // Count "yes" entries from previous days in the current week.
       const yesEntries = thisWeekEntries.filter(e => e.result === "כן");
-      
-      // Too many yes entries check (max 4 per week)
+
+      // Rule 1: Check if adding "yes" today would exceed the weekly limit.
+      // If there are already 4 or more "yes" entries from *previous days* this week, today cannot be "yes".
       if (yesEntries.length >= 4) {
         return false;
       }
-      
-      // Sort entries by date
-      const sortedEntries = [...thisWeekEntries].sort((a, b) => 
-        a.date.localeCompare(b.date)
-      );
-      
-      // Check for consecutive yes entries
-      for (let i = 0; i < sortedEntries.length - 1; i++) {
-        if (sortedEntries[i].result === "כן" && sortedEntries[i+1].result === "כן") {
-          // Check if they're actually consecutive days
-          const date1 = new Date(sortedEntries[i].date);
-          const date2 = new Date(sortedEntries[i+1].date);
-          const diffTime = Math.abs(date2 - date1);
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
-          if (diffDays === 1) {
-            return false; // Found consecutive yes days
-          }
-        }
-      }
-      
-      // Check if adding yes today would create consecutive days
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toISOString().split("T")[0];
-      
+
+      // Rule 2: Check if yesterday was "yes".
+      // Create a Date object for today to calculate yesterday.
+      const todayDateObj = new Date(today);
+      todayDateObj.setDate(todayDateObj.getDate() - 1);
+      const yesterdayStr = todayDateObj.toISOString().split("T")[0];
+
       const yesterdayEntry = history.find(e => e.date === yesterdayStr && !e.auto);
       if (yesterdayEntry && yesterdayEntry.result === "כן") {
-        return false; // Yesterday was yes, so today cannot be yes
+        return false; // Yesterday was "yes", so today cannot be "yes".
       }
-      
+
+      // If both rules pass, it's okay to choose "yes" today.
       return true;
     }
 
