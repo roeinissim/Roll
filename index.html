@@ -433,27 +433,41 @@
     }
 
     function canSmokeToday() {
-      const today = getToday();
-      const history = loadUsage();
-      const thisWeek = getCurrentWeek(history, today);
-      const totalYes = thisWeek.filter(e => e.result === "כן").length;
-      
-      // Find consecutive days with "yes"
-      let consecutiveYes = 0;
-      let maxConsecutiveYes = 0;
-      
-      for (let i = 0; i < thisWeek.length; i++) {
-        if (thisWeek[i].result === "כן") {
-          consecutiveYes++;
-          maxConsecutiveYes = Math.max(maxConsecutiveYes, consecutiveYes);
-        } else {
-          consecutiveYes = 0;
-        }
-      }
-      
-      if (totalYes >= 4 || maxConsecutiveYes >= 2) return false;
-      return true;
+  const today = getToday();
+  const history = loadUsage();
+  const thisWeek = getCurrentWeek(history, today);
+  
+  // Count real (non-auto) yes entries
+  const realEntries = thisWeek.filter(e => !e.auto);
+  const totalYes = realEntries.filter(e => e.result === "כן").length;
+  
+  // Find consecutive days with "yes" - only count real entries, not auto ones
+  let consecutiveYes = 0;
+  let maxConsecutiveYes = 0;
+  
+  for (let i = 0; i < thisWeek.length; i++) {
+    if (thisWeek[i].result === "כן" && !thisWeek[i].auto) {
+      consecutiveYes++;
+      maxConsecutiveYes = Math.max(maxConsecutiveYes, consecutiveYes);
+    } else {
+      consecutiveYes = 0;
     }
+  }
+  
+  // Also check if today would create consecutive days
+  const yesterdayIndex = thisWeek.findIndex(e => e.date === today) - 1;
+  if (yesterdayIndex >= 0 && thisWeek[yesterdayIndex].result === "כן" && !thisWeek[yesterdayIndex].auto) {
+    // Yesterday was a real "yes"
+    const dayBeforeYesterdayIndex = yesterdayIndex - 1;
+    if (dayBeforeYesterdayIndex >= 0 && thisWeek[dayBeforeYesterdayIndex].result === "כן" && !thisWeek[dayBeforeYesterdayIndex].auto) {
+      // But no need to check further than 2 days in a row
+      return false;
+    }
+  }
+  
+  if (totalYes >= 4 || maxConsecutiveYes >= 2) return false;
+  return true;
+}
 
     function addEntry(result) {
       const today = getToday();
