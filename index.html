@@ -148,7 +148,7 @@
     
     .day-buttons {
       display: inline-block;
-      margin-right: 10px;
+      margin-right: 10px; /* RTL: so it's on the left */
     }
     
     .day-buttons button {
@@ -288,7 +288,7 @@
   </div>
 
   <script>
-    const usageKey = 'usage_history_v11'; // Incremented version due to logic changes
+    const usageKey = 'usage_history_v12'; // Incremented version due to logic philosophy change
     let weeklyChartInstance = null;
 
     function getToday() {
@@ -305,8 +305,8 @@
 
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
-      const day = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
-      const diff = (day + 5) % 7; // Makes Tuesday (day 2) the start: (2+5)%7 = 0 diff. Sunday (0): (0+5)%7 = 5 diff.
+      const day = date.getDay(); 
+      const diff = (day + 5) % 7; 
       date.setDate(date.getDate() - diff);
       return date.toISOString().split("T")[0];
     }
@@ -318,14 +318,16 @@
       } catch (e) {
         console.error("Failed to load or parse usage history:", e);
         showNotification("שגיאה בטעינת נתונים. ייתכן שהנתונים אופסו.");
-        localStorage.removeItem(usageKey); // Attempt to clear corrupted data
+        localStorage.removeItem(usageKey); 
         return [];
       }
     }
 
     function saveUsage(history) {
       try {
-        localStorage.setItem(usageKey, JSON.stringify(history));
+        // Sort history by date before saving to ensure consistency (optional but good practice)
+        const sortedHistory = history.sort((a, b) => a.date.localeCompare(b.date));
+        localStorage.setItem(usageKey, JSON.stringify(sortedHistory));
       } catch (e) {
         console.error("Failed to save usage history:", e);
         showNotification("שגיאה: לא ניתן לשמור את הנתונים. ייתכן שהאחסון מלא.");
@@ -340,7 +342,6 @@
         date.setDate(startDate.getDate() + i);
         const dateStrLoop = date.toISOString().split("T")[0];
         const entry = history.find(e => e.date === dateStrLoop);
-        // Default to "לא" (No) and auto=true if no specific entry exists for that day
         return entry || { date: dateStrLoop, result: "לא", auto: true };
       });
     }
@@ -350,26 +351,25 @@
       const history = loadUsage();
       const thisWeek = getCurrentWeek(history, today);
       
-      // Filter for real (non-auto) entries to count "yes"
       const realEntriesThisWeek = thisWeek.filter(e => !e.auto && e.date <= today);
       const totalYes = realEntriesThisWeek.filter(e => e.result === "כן").length;
       
-      const todayEntry = history.find(e => e.date === today && !e.auto); // Look for a manual entry for today
+      const todayEntry = history.find(e => e.date === today && !e.auto); 
 
-      document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4 מותרים`;
+      if (totalYes > 4) {
+        document.getElementById("summary").innerText = `השבוע עשית ${totalYes} פעמים. המטרה היא עד 4.`;
+      } else {
+        document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4 מותרים.`;
+      }
+      
       document.getElementById("message").innerText = todayEntry ? `החלטת היום: ${todayEntry.result}` : "עדיין לא בחרת היום";
       
-      document.getElementById("todayCard").classList.toggle("today-actions-pulse", !todayEntry); // Use a more specific class name if needed
-      // Ensure CSS @keyframes pulse is tied to .today-actions-pulse or whatever class is used.
-      // The provided CSS uses .today-actions for animation, check if it should be .card.today-actions
-      // Original CSS had @keyframes pulse but no class explicitly assigned to it. Let's assume `today-actions` is the one from the HTML.
       const todayCard = document.getElementById("todayCard");
       if (!todayEntry) {
         todayCard.style.animation = 'pulse 1.5s infinite';
       } else {
         todayCard.style.animation = 'none';
       }
-
 
       const historyList = document.getElementById("historyList");
       historyList.innerHTML = '';
@@ -391,8 +391,7 @@
         const todayDate = new Date(today);
         todayDate.setHours(0,0,0,0);
 
-        // Show buttons for past days that were auto-filled OR for today if it's auto and not yet manually decided
-        if (entry.auto && entryDate <= todayDate) {
+        if (entryDate <= todayDate) { // Allow editing for today (if auto) or any past day
           const btnContainer = document.createElement("div");
           btnContainer.classList.add("day-buttons");
           
@@ -418,11 +417,16 @@
       document.getElementById("decideBtn").disabled = !!todayEntry;
     }
 
-    // Helper to check rules for a given date, considering a potential new "yes"
+    // Helper to check rules for a given date if it were to be "כן"
+    // This function is used by canSmokeToday to make decisions for the CURRENT day.
+    // It looks at the *actual* history, which might contain past rule violations.
     function checkRulesForDate(dateToCheckStr, newResultIfYes, fullHistory) {
-        if (newResultIfYes !== "כן") return { valid: true }; // Only validate if trying to set "כן"
+        if (newResultIfYes !== "כן") return { valid: true }; 
 
-        const historyToConsider = fullHistory.filter(e => e.date !== dateToCheckStr); // Exclude the day itself first
+        // Create a temporary history reflecting the potential change for dateToCheckStr
+        // This is important if dateToCheckStr already exists and is being changed.
+        const historyExcludingTargetDay = fullHistory.filter(e => e.date !== dateToCheckStr);
+        const potentialHistory = [...historyExcludingTargetDay, { date: dateToCheckStr, result: "כן", auto: false }];
 
         // 1. Check weekly limit
         const weekStartStr = getWeekStart(dateToCheckStr);
@@ -432,42 +436,39 @@
             const d = new Date(weekStartDate);
             d.setDate(weekStartDate.getDate() + i);
             const currentDayInWeekStr = d.toISOString().split("T")[0];
-            const entry = historyToConsider.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
-            if (entry) {
+            
+            const entryInPotentialHistory = potentialHistory.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
+            if (entryInPotentialHistory) {
                 yesInWeekCount++;
             }
         }
-        if (yesInWeekCount + 1 > 4) {
-            return { valid: false, reason: `לא ניתן לבחור 'כן'. יעבור את המגבלה השבועית של 4 (כבר ${yesInWeekCount} + 1).` };
+        if (yesInWeekCount > 4) { // The count already includes the potential 'yes' for dateToCheckStr
+            return { valid: false, reason: `לא ניתן לבחור 'כן'. יעבור את המגבלה השבועית של 4 (יהיו ${yesInWeekCount}).` };
         }
 
-        // 2. Check consecutive days rule
+        // 2. Check consecutive days rule based on potentialHistory
         const targetDate = new Date(dateToCheckStr);
         
         const prevDate = new Date(targetDate);
         prevDate.setDate(targetDate.getDate() - 1);
         const prevDateStr = prevDate.toISOString().split("T")[0];
-        const prevEntry = historyToConsider.find(e => e.date === prevDateStr && !e.auto && e.result === "כן");
-        if (prevEntry) {
-            return { valid: false, reason: "לא ניתן לבחור 'כן' יום אחרי יום 'כן' קודם." };
+        const prevEntry = potentialHistory.find(e => e.date === prevDateStr && !e.auto && e.result === "כן");
+        
+        // We only care if *both* prevDate and dateToCheckStr are "כן"
+        if (prevEntry && dateToCheckStr !== prevDateStr) { // Second condition prevents self-comparison if only one entry in history
+             // Check if prevEntry is indeed the day before dateToCheckStr and is "כן"
+            const entryForDateToCheck = potentialHistory.find(e=> e.date === dateToCheckStr && e.result === "כן");
+            if(entryForDateToCheck){ // If current day is also "yes"
+                 return { valid: false, reason: "לא ניתן לבחור 'כן' יום אחרי יום 'כן' קודם." };
+            }
         }
-
-        const nextDate = new Date(targetDate);
-        nextDate.setDate(targetDate.getDate() + 1);
-        const nextDateStr = nextDate.toISOString().split("T")[0];
-        // Only check the next day if it's not in the future relative to the actual current day
-        // AND it has a manual "yes" entry. This prevents an edit on Monday making Tuesday invalid if Tuesday was auto-no.
-        const actualCurrentToday = getToday(); // The real today
-        if (nextDateStr <= actualCurrentToday) { // Only consider next days that are not in the future
-             const nextEntry = historyToConsider.find(e => e.date === nextDateStr && !e.auto && e.result === "כן");
-             if (nextEntry) {
-                 return { valid: false, reason: "לא ניתן לבחור 'כן' יום לפני יום 'כן' אחר שכבר נקבע." };
-             }
-        }
+        // No need to check nextDay for canSmokeToday logic, as that would be validating a future choice.
+        // The consecutive rule for canSmokeToday is "was yesterday 'yes'?"
+        
         return { valid: true };
     }
 
-
+    // updatePastDay: Allows users to set past days to reflect reality, without rule validation for the past.
     function updatePastDay(dateStr, result) {
       const actualToday = getToday();
       const updateDate = new Date(dateStr);
@@ -475,21 +476,17 @@
       const actualTodayDate = new Date(actualToday);
       actualTodayDate.setHours(0,0,0,0);
 
-      if (updateDate > actualTodayDate) {
-        showNotification("לא ניתן לעדכן ימים עתידייים.");
+      if (updateDate > actualTodayDate && dateStr !== actualToday) { // Allow editing today even if it's "future" by a few hours
+        showNotification("לא ניתן לעדכן ימים עתידייים (מלבד היום).");
         return;
       }
       
       let history = loadUsage();
       const existingEntry = history.find(e => e.date === dateStr);
 
-      // If trying to set "כן", validate rules
-      if (result === "כן") {
-        const validation = checkRulesForDate(dateStr, "כן", history);
-        if (!validation.valid) {
-          showNotification(validation.reason);
-          return;
-        }
+      if (existingEntry && !existingEntry.auto && existingEntry.result === result) {
+        // No change if trying to set to the same manual value
+        return; 
       }
       
       // Remove any existing entry for this date (auto or manual)
@@ -502,14 +499,14 @@
       showNotification(`היום ${formatDate(dateStr)} עודכן ל: ${result}`);
     }
 
-    // This is the canSmokeToday function from the previous fix (focused on *today's* decision)
+    // canSmokeToday: Strictly enforces rules for *today's* decision, based on actual history.
     function canSmokeToday() {
       const today = getToday();
       const history = loadUsage();
-      const validation = checkRulesForDate(today, "כן", history);
+      // The `checkRulesForDate` will evaluate if making *today* "כן" is valid given the current history.
+      const validation = checkRulesForDate(today, "כן", history); 
       if (!validation.valid) {
-        // Use a more generic message for canSmokeToday as it's for the main buttons
-        showNotification("עברת את המגבלה השבועית או שיש יום 'כן' רצוף.");
+        showNotification(validation.reason || "עברת את המגבלה השבועית או שיש יום 'כן' רצוף.");
       }
       return validation.valid;
     }
@@ -530,7 +527,6 @@
         return;
       }
       
-      // Remove any existing entry for today (likely an auto one) before adding the manual one
       history = history.filter(e => e.date !== today);
       history.push({ date: today, result, auto: false });
       saveUsage(history);
@@ -541,11 +537,11 @@
     function renderChart() {
       if (weeklyChartInstance) weeklyChartInstance.destroy();
       const today = getToday();
-      const todayDateObj = new Date(today); // Use current date for comparison
+      const todayDateObj = new Date(today); 
       todayDateObj.setHours(0,0,0,0);
 
       const history = loadUsage();
-      const thisWeek = getCurrentWeek(history, today); // getCurrentWeek now fills with auto "לא"
+      const thisWeek = getCurrentWeek(history, today); 
 
       const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
       const data = [];
@@ -554,26 +550,20 @@
         const entryDate = new Date(entry.date);
         entryDate.setHours(0,0,0,0);
         
-        // Determine if we should show data for this day
-        // Show if it's in the past, or if it's today and a manual entry exists or it's an auto-entry.
-        // Basically, show all days up to and including today, unless it's a future day.
-        const manualEntryForDayExists = history.find(h => h.date === entry.date && !h.auto);
-
-        if (entryDate > todayDateObj) { // Future day
+        if (entryDate > todayDateObj) { 
             data.push(null);
         } else {
-            // It's today or a past day
-            if (entry.result === "כן") {
+            if (entry.result === "כן") { // Includes manually set past "yes" even if rule-breaking
                 data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
-            } else if (entry.result === "לא" && !entry.auto) { // Manual "לא"
-                data.push({ value: 1, actualResult: "לא", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
-            } else { // Auto "לא" (or potentially an unhandled state, defaults to auto look)
+            } else if (entry.result === "לא" && !entry.auto) { 
+                data.push({ value: 1, actualResult: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
+            } else { // Auto "לא"
                 data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
             }
         }
       }
 
-      const ctx = document.getElementById("weeklyChart").getContext('2d');
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
       weeklyChartInstance = new Chart(ctx, {
         type: "bar",
         data: {
@@ -625,7 +615,7 @@
         legendContainer.style.gap = '15px';
         document.getElementById('weeklyChart').parentNode.appendChild(legendContainer);
       }
-      legendContainer.innerHTML = ''; // Clear previous legend items
+      legendContainer.innerHTML = ''; 
 
       const legendItems = [
         { label: "כן", color: "rgba(58, 140, 58, 0.7)" },
@@ -658,8 +648,8 @@
       notification.id = "custom-notification";
       notification.style.position = "fixed";
       notification.style.bottom = "20px";
-      notification.style.right = "20px";
-      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)"; // Red for errors/warnings, green for success
+      notification.style.right = "20px"; // For RTL, this will be on the left. Consider `left: "20px"` if you want it on the browser's right.
+      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)";
       notification.style.color = "white";
       notification.style.padding = "15px 20px";
       notification.style.borderRadius = "8px";
@@ -686,7 +676,7 @@
             document.body.removeChild(notification);
           }
         }, 300);
-      }, 3000 + (message.length * 30)); // Longer display for longer messages
+      }, 3000 + (message.length * 30)); 
     }
 
     function confirmReset() {
@@ -701,13 +691,10 @@
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
     document.getElementById("noBtn").onclick = () => addEntry("לא");
     document.getElementById("decideBtn").onclick = () => {
-      // canSmokeToday now handles its own notification if it returns false
       addEntry(canSmokeToday() ? (Math.random() < 0.5 ? "כן" : "לא") : "לא");
     };
 
-    // Initial setup
     updateUI();
     renderChart();
-  </script>
-</body>
+  </script></body>
 </html>
