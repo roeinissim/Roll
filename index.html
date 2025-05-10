@@ -306,7 +306,7 @@
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
       const day = date.getDay();
-      const diff = (day + 5) % 7;
+      const diff = (day + 5) % 7; // This makes Tuesday the first day of the week (day 2 + 5 = 7 % 7 = 0)
       date.setDate(date.getDate() - diff);
       return date.toISOString().split("T")[0];
     }
@@ -432,44 +432,73 @@
       renderChart();
     }
 
-// Replace the current canSmokeToday function
-function canSmokeToday() {
-  const today = getToday();
-  const history = loadUsage();
-  const thisWeek = getCurrentWeek(history, today);
-  
-  // Count real (non-auto) yes entries
-  const realEntries = thisWeek.filter(e => !e.auto);
-  const totalYes = realEntries.filter(e => e.result === "כן").length;
-  
-  // Find consecutive days with "yes" - only count real entries, not auto ones
-  let consecutiveYes = 0;
-  let maxConsecutiveYes = 0;
-  
-  for (let i = 0; i < thisWeek.length; i++) {
-    if (thisWeek[i].result === "כן" && !thisWeek[i].auto) {
-      consecutiveYes++;
-      maxConsecutiveYes = Math.max(maxConsecutiveYes, consecutiveYes);
-    } else {
-      consecutiveYes = 0;
+    function canSmokeToday() {
+      const today = getToday();
+      const history = loadUsage();
+      const weekStart = getWeekStart(today);
+      
+      // Only consider real (non-auto) entries for this week
+      const thisWeekEntries = history.filter(e => 
+        !e.auto && e.date >= weekStart && e.date <= today
+      );
+      
+      // Count yes entries
+      const yesEntries = thisWeekEntries.filter(e => e.result === "כן");
+      
+      // Too many yes entries check (max 4 per week)
+      if (yesEntries.length >= 4) {
+        return false;
+      }
+      
+      // Sort entries by date
+      const sortedEntries = [...thisWeekEntries].sort((a, b) => 
+        a.date.localeCompare(b.date)
+      );
+      
+      // Check for consecutive yes entries
+      for (let i = 0; i < sortedEntries.length - 1; i++) {
+        if (sortedEntries[i].result === "כן" && sortedEntries[i+1].result === "כן") {
+          // Check if they're actually consecutive days
+          const date1 = new Date(sortedEntries[i].date);
+          const date2 = new Date(sortedEntries[i+1].date);
+          const diffTime = Math.abs(date2 - date1);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            return false; // Found consecutive yes days
+          }
+        }
+      }
+      
+      // Check if adding yes today would create consecutive days
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split("T")[0];
+      
+      const yesterdayEntry = history.find(e => e.date === yesterdayStr && !e.auto);
+      if (yesterdayEntry && yesterdayEntry.result === "כן") {
+        return false; // Yesterday was yes, so today cannot be yes
+      }
+      
+      return true;
     }
-  }
-  
-  if (totalYes >= 4 || maxConsecutiveYes >= 2) return false;
-  return true;
-}
-
-// Execute the function to see if it returns the correct result now
-console.log("Can smoke today:", canSmokeToday());
 
     function addEntry(result) {
       const today = getToday();
       const history = loadUsage();
-      if (history.find(e => e.date === today)) return;
+      
+      // Check if we already have an entry for today
+      if (history.find(e => e.date === today)) {
+        return;
+      }
+      
+      // Check if we can smoke today if that's what they want to do
       if (result === "כן" && !canSmokeToday()) {
         showNotification("עברת את המגבלה השבועית או עשית פעמיים רצוף.");
         return;
       }
+      
+      // Add the entry
       history.push({ date: today, result, auto: false });
       saveUsage(history);
       updateUI();
