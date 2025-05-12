@@ -650,11 +650,11 @@
               data.push(null); // Future days are blank
           } else {
               if (entry.result === "כן") {
-                  data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
+                  data.push({ value: 1, actualResult: " כן ", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
               } else if (entry.result === "לא" && !entry.auto) {
-                  data.push({ value: 1, actualResult: "לא", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
+                  data.push({ value: 1, actualResult: " לא ", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
               } else { // Default 'לא' (auto) for past days without manual entry
-                  data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
+                  data.push({ value: 1, actualResult: " אוטומטי (לא) ", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
               }
           }
       }
@@ -722,9 +722,9 @@
       legendContainer.innerHTML = ''; // Clear previous legend
 
       const legendItems = [
-        { label: "כן", color: "rgba(58, 140, 58, 0.7)" },
-        { label: "לא", color: "rgba(184, 50, 50, 0.7)" },
-        { label: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)" }
+        { label: " כן ", color: "rgba(58, 140, 58, 0.7)" },
+        { label: " לא ", color: "rgba(184, 50, 50, 0.7)" },
+        { label: " אוטומטי (לא) ", color: "rgba(112, 112, 112, 0.5)" }
       ];
 
       legendItems.forEach(item => {
