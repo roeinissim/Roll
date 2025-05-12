@@ -1,13 +1,4 @@
-    function updateUI() {
-      const today = getToday();
-      const history = loadUsage(); // Load the raw history first
-      const thisWeekData = getCurrentWeek(history, today); // Get week structure with defaults
-
-      // Calculate totalYes based on actual non-auto entries in history for the week
-      const weekStartStr = getWeekStart(today);
-      const weekStartDate = new Date(weekStartStr);
-      let totalYes = 0;
-      for (let i = 0; i < 7; i++) {<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
