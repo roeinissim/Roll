@@ -454,12 +454,12 @@
               const yesBtnPast = document.createElement("button");
               yesBtnPast.innerText = "כן";
               yesBtnPast.classList.add("btn-yes");
-              yesBtnPast.onclick = () => updatePastDay(entry.date, "✅ כן");
+              yesBtnPast.onclick = () => updatePastDay(entry.date, "כן");
 
               const noBtnPast = document.createElement("button");
               noBtnPast.innerText = "לא";
               noBtnPast.classList.add("btn-no");
-              noBtnPast.onclick = () => updatePastDay(entry.date, "❌ לא");
+              noBtnPast.onclick = () => updatePastDay(entry.date, "לא");
 
               btnContainer.appendChild(yesBtnPast);
               btnContainer.appendChild(noBtnPast);
@@ -808,8 +808,8 @@
     }
 
 
-    document.getElementById("yesBtn").onclick = () => addEntry("✅ כן");
-    document.getElementById("noBtn").onclick = () => addEntry("❌ לא");
+    document.getElementById("yesBtn").onclick = () => addEntry("כן");
+    document.getElementById("noBtn").onclick = () => addEntry("לא");
     document.getElementById("decideBtn").onclick = () => {
         // Decide logic now also needs to respect the rules
         const today = getToday();
