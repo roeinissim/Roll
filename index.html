@@ -21,13 +21,13 @@
       --border-light: rgba(255, 255, 255, 0.05);
       --shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
-    
+
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-    
+
     body {
       margin: 0;
       font-family: 'Rubik', 'Secular One', sans-serif;
@@ -39,7 +39,7 @@
       line-height: 1.6;
       min-height: 100vh;
     }
-    
+
     h1 {
       font-family: 'Secular One', sans-serif;
       font-size: 2.5rem;
@@ -47,19 +47,19 @@
       color: var(--primary-light);
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
-    
+
     h3 {
       font-family: 'Secular One', sans-serif;
       margin-bottom: 1rem;
       font-size: 1.5rem;
       color: var(--primary-light);
     }
-    
+
     .container {
       max-width: 800px;
       margin: 0 auto;
     }
-    
+
     .card {
       background-color: var(--bg-card);
       border-radius: 12px;
@@ -70,15 +70,15 @@
       border: 1px solid var(--border-light);
       transition: transform 0.2s ease;
     }
-    
+
     .card:hover {
       transform: translateY(-3px);
     }
-    
+
     .auto-entry {
       opacity: 0.5;
     }
-    
+
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -93,17 +93,17 @@
       font-family: 'Rubik', sans-serif;
       font-weight: 500;
     }
-    
+
     button:hover {
       background-color: var(--primary-light);
       transform: translateY(-2px);
     }
-    
+
     button:active {
       transform: translateY(1px);
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
     }
-    
+
     button:disabled {
       background-color: #555;
       cursor: not-allowed;
@@ -111,52 +111,52 @@
       box-shadow: none;
       opacity: 0.7;
     }
-    
+
     .btn-yes {
       background-color: var(--accent-yes);
     }
-    
+
     .btn-yes:hover {
       background-color: #4a9c4a;
     }
-    
+
     .btn-no {
       background-color: var(--accent-no);
     }
-    
+
     .btn-no:hover {
       background-color: #c84242;
     }
-    
+
     .btn-decide {
       background-color: #37b8bd;
     }
-    
+
     .btn-decide:hover {
       background-color: #46bbbf;
     }
-    
+
     .btn-reset {
       background-color: #455a64;
       font-size: 14px;
       padding: 8px 16px;
     }
-    
+
     .btn-reset:hover {
       background-color: #546e7a;
     }
-    
+
     .day-buttons {
       display: inline-block;
       margin-right: 10px; /* RTL: so it's on the left */
     }
-    
+
     .day-buttons button {
       padding: 4px 12px;
       font-size: 13px;
       margin: 0 2px;
     }
-    
+
     .history-item {
       display: flex;
       align-items: center;
@@ -167,76 +167,76 @@
       background-color: rgba(255, 255, 255, 0.03);
       transition: background-color 0.2s ease;
     }
-    
+
     .history-item:hover {
       background-color: rgba(255, 255, 255, 0.05);
     }
-    
+
     .history-yes {
       border-right: 3px solid var(--accent-yes);
     }
-    
+
     .history-no {
       border-right: 3px solid var(--accent-no);
     }
-    
+
     .history-auto {
       border-right: 3px solid var(--accent-auto);
     }
-    
+
     #summary {
       font-size: 1.4rem;
       margin-bottom: 10px;
       font-weight: 500;
     }
-    
+
     #message {
       font-size: 1.1rem;
       color: var(--text-secondary);
     }
-    
+
     .main-actions {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 10px;
     }
-    
+
     .chart-container {
       position: relative;
-      height: 300px; 
+      height: 300px;
       width: 100%;
-      margin-bottom: 30px; 
+      margin-bottom: 30px;
     }
-    
+
     .custom-legend {
       margin-top: 15px;
       margin-bottom: 10px;
     }
-    
+
     @media (max-width: 600px) {
       .card {
         padding: 20px 15px;
       }
-      
+
       button {
         padding: 8px 16px;
         font-size: 14px;
       }
-      
+
       h1 {
         font-size: 1.8rem;
       }
-      
+
       #summary {
         font-size: 1.1rem;
       }
-      
+
       .chart-container {
-        height: 250px; 
+        height: 250px;
       }
     }
-    
+
     @keyframes pulse {
       0% {
         box-shadow: 0 0 0 0 rgba(78, 142, 142, 0.4);
@@ -280,6 +280,7 @@
       <div class="chart-container">
         <canvas id="weeklyChart"></canvas>
       </div>
+      <!-- Legend will be appended here by JS -->
     </div>
 
     <div class="card">
@@ -305,11 +306,12 @@
 
     function getWeekStart(dateStr) {
       const date = new Date(dateStr);
-      const day = date.getDay(); 
-      const diff = (day + 5) % 7; 
+      const day = date.getDay();
+      const diff = (day + 5) % 7; // Adjust to make Tuesday the start (Tuesday = 2, so (2+5)%7 = 0)
       date.setDate(date.getDate() - diff);
       return date.toISOString().split("T")[0];
     }
+
 
     function loadUsage() {
       try {
@@ -318,7 +320,7 @@
       } catch (e) {
         console.error("Failed to load or parse usage history:", e);
         showNotification("שגיאה בטעינת נתונים. ייתכן שהנתונים אופסו.");
-        localStorage.removeItem(usageKey); 
+        localStorage.removeItem(usageKey);
         return [];
       }
     }
@@ -341,28 +343,33 @@
         date.setDate(startDate.getDate() + i);
         const dateStrLoop = date.toISOString().split("T")[0];
         const entry = history.find(e => e.date === dateStrLoop);
-        return entry || { date: dateStrLoop, result: "לא", auto: true };
-      });
+        // Default to 'לא' (auto) if no entry exists for past/present days
+        const defaultResult = dateStrLoop <= todayStr ? "לא" : null; // Null for future days
+        const defaultAuto = dateStrLoop <= todayStr ? true : false;
+        return entry || { date: dateStrLoop, result: defaultResult, auto: defaultAuto };
+      }).filter(e => e.result !== null); // Filter out future days completely for now
     }
+
 
     function updateUI() {
       const today = getToday();
       const history = loadUsage();
-      const thisWeek = getCurrentWeek(history, today);
-      
+      const thisWeek = getCurrentWeek(history, today); // getCurrentWeek now filters future days
+
+      // Filter for non-auto entries within the current week dates available
       const realEntriesThisWeek = thisWeek.filter(e => !e.auto && e.date <= today);
       const totalYes = realEntriesThisWeek.filter(e => e.result === "כן").length;
-      
-      const todayEntry = history.find(e => e.date === today && !e.auto); 
+
+      const todayEntry = history.find(e => e.date === today && !e.auto);
 
       if (totalYes > 4) {
         document.getElementById("summary").innerText = `השבוע עשית ${totalYes} פעמים. המטרה היא עד 4.`;
       } else {
         document.getElementById("summary").innerText = `השבוע עשית ${totalYes} מתוך 4 מותרים.`;
       }
-      
+
       document.getElementById("message").innerText = todayEntry ? `החלטת היום: ${todayEntry.result}` : "עדיין לא בחרת היום";
-      
+
       const todayCard = document.getElementById("todayCard");
       if (!todayEntry) {
         todayCard.style.animation = 'pulse 1.5s infinite';
@@ -372,57 +379,62 @@
 
       const historyList = document.getElementById("historyList");
       historyList.innerHTML = '';
-      thisWeek.slice().reverse().forEach(entry => {
-        const div = document.createElement("div");
-        div.classList.add("history-item");
-        
-        if (entry.result === "כן") div.classList.add("history-yes");
-        else if (entry.result === "לא" && !entry.auto) div.classList.add("history-no");
-        else if (entry.auto) div.classList.add("history-auto");
-        
-        const dateResult = document.createElement("div");
-        dateResult.innerText = `${formatDate(entry.date)} : ${entry.result}${entry.auto ? " (אוטומטי)" : ""}`;
-        if (entry.auto) dateResult.classList.add("auto-entry");
-        div.appendChild(dateResult);
-        
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0,0,0,0);
-        const todayDate = new Date(today);
-        todayDate.setHours(0,0,0,0);
+      // Display week days chronologically (Tue -> Mon)
+      thisWeek.slice().forEach(entry => { // No reverse needed if getCurrentWeek is correct
+          const div = document.createElement("div");
+          div.classList.add("history-item");
 
-        // *** CHANGED CONDITION HERE ***
-        // Only show buttons for days strictly BEFORE today
-        if (entryDate < todayDate) { 
-          const btnContainer = document.createElement("div");
-          btnContainer.classList.add("day-buttons");
-          
-          const yesBtnPast = document.createElement("button");
-          yesBtnPast.innerText = "כן";
-          yesBtnPast.classList.add("btn-yes");
-          yesBtnPast.onclick = () => updatePastDay(entry.date, "כן");
-          
-          const noBtnPast = document.createElement("button");
-          noBtnPast.innerText = "לא";
-          noBtnPast.classList.add("btn-no");
-          noBtnPast.onclick = () => updatePastDay(entry.date, "לא");
-          
-          btnContainer.appendChild(yesBtnPast);
-          btnContainer.appendChild(noBtnPast);
-          div.appendChild(btnContainer);
-        }
-        historyList.appendChild(div);
+          if (entry.result === "כן") div.classList.add("history-yes");
+          else if (entry.result === "לא" && !entry.auto) div.classList.add("history-no");
+          else if (entry.auto) div.classList.add("history-auto");
+
+          const dateResult = document.createElement("div");
+          const dayName = new Date(entry.date).toLocaleDateString('he-IL', { weekday: 'long' });
+          dateResult.innerText = `${dayName} (${formatDate(entry.date)}): ${entry.result}${entry.auto ? " (אוטומטי)" : ""}`;
+          if (entry.auto) dateResult.classList.add("auto-entry");
+          div.appendChild(dateResult);
+
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0,0,0,0);
+          const todayDate = new Date(today);
+          todayDate.setHours(0,0,0,0);
+
+          // Only show buttons for days strictly BEFORE today
+          if (entryDate < todayDate) {
+              const btnContainer = document.createElement("div");
+              btnContainer.classList.add("day-buttons");
+
+              const yesBtnPast = document.createElement("button");
+              yesBtnPast.innerText = "כן";
+              yesBtnPast.classList.add("btn-yes");
+              yesBtnPast.onclick = () => updatePastDay(entry.date, "כן");
+
+              const noBtnPast = document.createElement("button");
+              noBtnPast.innerText = "לא";
+              noBtnPast.classList.add("btn-no");
+              noBtnPast.onclick = () => updatePastDay(entry.date, "לא");
+
+              btnContainer.appendChild(yesBtnPast);
+              btnContainer.appendChild(noBtnPast);
+              div.appendChild(btnContainer);
+          }
+          historyList.appendChild(div);
       });
+
 
       document.getElementById("yesBtn").disabled = !!todayEntry;
       document.getElementById("noBtn").disabled = !!todayEntry;
       document.getElementById("decideBtn").disabled = !!todayEntry;
     }
 
+    // --- MODIFIED FUNCTION ---
     function checkRulesForDate(dateToCheckStr, newResultIfYes, fullHistory) {
-        if (newResultIfYes !== "כן") return { valid: true }; 
+        if (newResultIfYes !== "כן") return { valid: true }; // Rules only apply when trying to add 'yes'
 
+        // --- Rule 1: Weekly Limit ---
+        // Create a *potential* history view if 'yes' is added for the date being checked
         const historyExcludingTargetDay = fullHistory.filter(e => e.date !== dateToCheckStr);
-        const potentialHistory = [...historyExcludingTargetDay, { date: dateToCheckStr, result: "כן", auto: false }];
+        const potentialHistoryWithNewYes = [...historyExcludingTargetDay, { date: dateToCheckStr, result: "כן", auto: false }];
 
         const weekStartStr = getWeekStart(dateToCheckStr);
         const weekStartDate = new Date(weekStartStr);
@@ -431,8 +443,9 @@
             const d = new Date(weekStartDate);
             d.setDate(weekStartDate.getDate() + i);
             const currentDayInWeekStr = d.toISOString().split("T")[0];
-            
-            const entryInPotentialHistory = potentialHistory.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
+
+            // Check the potential history for 'yes' count within the week
+            const entryInPotentialHistory = potentialHistoryWithNewYes.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
             if (entryInPotentialHistory) {
                 yesInWeekCount++;
             }
@@ -441,20 +454,31 @@
             return { valid: false, reason: `לא ניתן לבחור 'כן'. יעבור את המגבלה השבועית של 4 (יהיו ${yesInWeekCount}).` };
         }
 
+        // --- Rule 2: Consecutive Days ---
+        // Check if the two preceding days were *already* marked as 'yes' (non-auto)
         const targetDate = new Date(dateToCheckStr);
+
         const prevDate = new Date(targetDate);
         prevDate.setDate(targetDate.getDate() - 1);
         const prevDateStr = prevDate.toISOString().split("T")[0];
-        const prevEntry = potentialHistory.find(e => e.date === prevDateStr && !e.auto && e.result === "כן");
-        
-        if (prevEntry && dateToCheckStr !== prevDateStr) { 
-            const entryForDateToCheck = potentialHistory.find(e=> e.date === dateToCheckStr && e.result === "כן");
-            if(entryForDateToCheck){ 
-                 return { valid: false, reason: "לא ניתן לבחור 'כן' יום אחרי יום 'כן' קודם." };
-            }
+
+        const prevPrevDate = new Date(targetDate);
+        prevPrevDate.setDate(targetDate.getDate() - 2);
+        const prevPrevDateStr = prevPrevDate.toISOString().split("T")[0];
+
+        // Look in the *existing* full history for the previous two days
+        const prevEntryYes = fullHistory.find(e => e.date === prevDateStr && !e.auto && e.result === "כן");
+        const prevPrevEntryYes = fullHistory.find(e => e.date === prevPrevDateStr && !e.auto && e.result === "כן");
+
+        // Block ONLY if *both* preceding days were 'yes'
+        if (prevEntryYes && prevPrevEntryYes) {
+             return { valid: false, reason: "לא ניתן לבחור 'כן' אחרי שני ימי 'כן' רצופים." };
         }
+
+        // If neither rule was violated
         return { valid: true };
     }
+    // --- END OF MODIFIED FUNCTION ---
 
     function updatePastDay(dateStr, result) {
       const actualToday = getToday();
@@ -463,90 +487,126 @@
       const actualTodayDate = new Date(actualToday);
       actualTodayDate.setHours(0,0,0,0);
 
-      // This check is now mostly for future dates, as UI won't call it for actualToday.
-      if (updateDate > actualTodayDate) { 
-        showNotification("לא ניתן לעדכן ימים עתידייים.");
+      if (updateDate >= actualTodayDate) {
+        showNotification("יש להשתמש בכפתורים הראשיים להחלטה יומית או לעדכן ימים קודמים בלבד.");
         return;
       }
-       if (updateDate >= actualTodayDate) { // Also prevent updating today via this function
-        showNotification("יש להשתמש בכפתורים הראשיים להחלטה יומית.");
-        return;
-      }
-      
-      let history = loadUsage();
-      const existingEntry = history.find(e => e.date === dateStr);
 
+      let history = loadUsage();
+      const existingEntryIndex = history.findIndex(e => e.date === dateStr);
+      let existingEntry = existingEntryIndex !== -1 ? history[existingEntryIndex] : null;
+
+      // Prevent redundant updates
       if (existingEntry && !existingEntry.auto && existingEntry.result === result) {
-        return; 
+        showNotification(`היום ${formatDate(dateStr)} כבר מוגדר כ: ${result}`);
+        return;
       }
-      
-      const filteredHistory = history.filter(e => e.date !== dateStr);
-      filteredHistory.push({ date: dateStr, result, auto: false }); 
-      
-      saveUsage(filteredHistory);
+
+      // Check rules BEFORE making the change for a past day
+      const ruleCheck = checkRulesForDate(dateStr, result, history);
+      if (!ruleCheck.valid) {
+          showNotification(`עדכון נכשל (${formatDate(dateStr)}): ${ruleCheck.reason}`);
+          return;
+      }
+
+      // Remove old entry if exists, then add new one
+      if (existingEntryIndex !== -1) {
+          history.splice(existingEntryIndex, 1);
+      }
+      history.push({ date: dateStr, result, auto: false });
+
+      saveUsage(history);
       updateUI();
       renderChart();
       showNotification(`היום ${formatDate(dateStr)} עודכן ל: ${result}`);
     }
 
+
     function canSmokeToday() {
       const today = getToday();
       const history = loadUsage();
-      const validation = checkRulesForDate(today, "כן", history); 
+      // Use the updated checkRulesForDate function
+      const validation = checkRulesForDate(today, "כן", history);
       if (!validation.valid) {
-        showNotification(validation.reason || "עברת את המגבלה השבועית או שיש יום 'כן' רצוף.");
+        // Use the specific reason from the check function
+        showNotification(validation.reason);
       }
       return validation.valid;
     }
 
     function addEntry(result) {
-      const today = getToday();
-      let history = loadUsage();
-      
-      const existingTodayEntry = history.find(e => e.date === today);
-      if (existingTodayEntry && !existingTodayEntry.auto) {
-        showNotification("כבר בחרת היום (בחירה ידנית).");
-        return;
-      }
-      
-      if (result === "כן" && !canSmokeToday()) {
-        return;
-      }
-      
-      history = history.filter(e => e.date !== today);
-      history.push({ date: today, result, auto: false });
-      saveUsage(history);
-      updateUI();
-      renderChart();
+        const today = getToday();
+        let history = loadUsage();
+
+        const existingTodayEntryIndex = history.findIndex(e => e.date === today);
+        const existingTodayEntry = existingTodayEntryIndex !== -1 ? history[existingTodayEntryIndex] : null;
+
+        // Allow overwriting an 'auto' entry for today, but not a manual one.
+        if (existingTodayEntry && !existingTodayEntry.auto) {
+            showNotification("כבר בחרת היום (בחירה ידנית).");
+            return;
+        }
+
+        // Check rules *before* adding the entry
+        if (result === "כן") {
+            const ruleCheck = checkRulesForDate(today, "כן", history);
+            if (!ruleCheck.valid) {
+                showNotification(ruleCheck.reason);
+                return; // Stop if rules are violated
+            }
+        }
+
+        // Remove existing entry for today (could be auto or manual if logic changes)
+        if (existingTodayEntryIndex !== -1) {
+            history.splice(existingTodayEntryIndex, 1);
+        }
+
+        // Add the new manual entry
+        history.push({ date: today, result, auto: false });
+        saveUsage(history);
+        updateUI();
+        renderChart();
+        showNotification(`הבחירה להיום נשמרה: ${result}`); // Confirmation message
     }
+
 
     function renderChart() {
       if (weeklyChartInstance) weeklyChartInstance.destroy();
       const today = getToday();
-      const todayDateObj = new Date(today); 
+      const todayDateObj = new Date(today);
       todayDateObj.setHours(0,0,0,0);
 
       const history = loadUsage();
-      const thisWeek = getCurrentWeek(history, today); 
+      // Use the version of getCurrentWeek that includes defaults for past days
+      const startOfWeek = getWeekStart(today);
+      const weekData = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date(startOfWeek);
+          date.setDate(date.getDate() + i);
+          const dateStr = date.toISOString().split("T")[0];
+          const entry = history.find(e => e.date === dateStr);
+          const isPastOrToday = date <= todayDateObj;
+          return entry || { date: dateStr, result: isPastOrToday ? "לא" : null, auto: isPastOrToday };
+      });
 
-      const labels = ["שלישי", "רביעי", "חמישי", "שישי", "שבת", "ראשון", "שני"];
+
+      const labels = weekData.map(entry => new Date(entry.date).toLocaleDateString('he-IL', { weekday: 'short' })); // Short day names
       const data = [];
 
-      for (const entry of thisWeek) {
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0,0,0,0);
-        
-        if (entryDate > todayDateObj) { 
-            data.push(null);
-        } else {
-            if (entry.result === "כן") { 
-                data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
-            } else if (entry.result === "לא" && !entry.auto) { 
-                data.push({ value: 1, actualResult: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
-            } else { 
-                data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
-            }
-        }
+      for (const entry of weekData) {
+          const entryDate = new Date(entry.date);
+          entryDate.setHours(0,0,0,0);
+
+          if (entryDate > todayDateObj) {
+              data.push(null); // Future days are blank
+          } else {
+              if (entry.result === "כן") {
+                  data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
+              } else if (entry.result === "לא" && !entry.auto) {
+                  data.push({ value: 1, actualResult: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
+              } else { // Default 'לא' (auto) for past days without manual entry
+                  data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
+              }
+          }
       }
 
       const ctx = document.getElementById('weeklyChart').getContext('2d');
@@ -566,15 +626,17 @@
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { 
-            legend: { display: false },
+          plugins: {
+            legend: { display: false }, // Keep custom legend
             tooltip: {
               callbacks: {
                 title: (tooltipItems) => {
                   const dayIndex = tooltipItems[0].dataIndex;
-                  return data[dayIndex] ? `${data[dayIndex].actualResult} - ${labels[dayIndex]}` : labels[dayIndex];
+                  const entryDate = weekData[dayIndex].date;
+                  const fullDayName = new Date(entryDate).toLocaleDateString('he-IL', { weekday: 'long' });
+                  return data[dayIndex] ? `${data[dayIndex].actualResult} - ${fullDayName} (${formatDate(entryDate)})` : `${fullDayName} (${formatDate(entryDate)})`;
                 },
-                label: () => ""
+                label: () => "" // No body label needed
               }
             }
           },
@@ -582,47 +644,57 @@
             y: {
               beginAtZero: true,
               max: 1,
-              ticks: { stepSize: 1, callback: v => v === 1 ? '✔' : '' },
+              ticks: { display: false }, // Hide Y-axis labels (0, 1)
               grid: { color: "rgba(255, 255, 255, 0.05)" }
             },
-            x: { grid: { color: "rgba(255, 255, 255, 0.05)" }}
+            x: {
+              grid: { display: false } // Hide vertical grid lines
+            }
           }
         }
       });
-      
+
+      // --- Custom Legend ---
       const legendContainerId = 'customChartLegend';
       let legendContainer = document.getElementById(legendContainerId);
+      const chartCanvasParent = document.getElementById('weeklyChart').parentNode; // Get parent div
       if (!legendContainer) {
         legendContainer = document.createElement('div');
         legendContainer.id = legendContainerId;
-        legendContainer.className = 'custom-legend'; 
+        legendContainer.className = 'custom-legend';
         legendContainer.style.display = 'flex';
         legendContainer.style.justifyContent = 'center';
-        legendContainer.style.gap = '15px';
-        document.getElementById('weeklyChart').parentNode.appendChild(legendContainer);
+        legendContainer.style.flexWrap = 'wrap'; // Allow wrapping on small screens
+        legendContainer.style.gap = '10px 15px'; // Row and column gap
+        // Insert legend *after* the canvas container within its card
+         chartCanvasParent.parentNode.insertBefore(legendContainer, chartCanvasParent.nextSibling);
       }
-      legendContainer.innerHTML = ''; 
+      legendContainer.innerHTML = ''; // Clear previous legend
 
       const legendItems = [
         { label: "כן", color: "rgba(58, 140, 58, 0.7)" },
         { label: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)" },
         { label: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)" }
       ];
-      
+
       legendItems.forEach(item => {
         const legendItem = document.createElement('div');
         legendItem.style.display = 'flex';
         legendItem.style.alignItems = 'center';
         const colorBox = document.createElement('div');
         colorBox.style.width = '12px'; colorBox.style.height = '12px';
-        colorBox.style.background = item.color; colorBox.style.marginRight = '5px';
-        colorBox.style.borderRadius = '2px';
+        colorBox.style.background = item.color; colorBox.style.marginLeft = '5px'; // RTL adjustment: margin-left
+        colorBox.style.borderRadius = '3px'; // Slightly rounder box
+        colorBox.style.border = '1px solid rgba(255,255,255,0.2)'; // Subtle border
         const label = document.createElement('span');
-        label.textContent = item.label; label.style.fontSize = '14px';
-        legendItem.appendChild(colorBox); legendItem.appendChild(label);
+        label.textContent = item.label; label.style.fontSize = '13px'; // Smaller legend font
+        // Order for RTL: Label then Color Box
+        legendItem.appendChild(label);
+        legendItem.appendChild(colorBox);
         legendContainer.appendChild(legendItem);
       });
     }
+
 
     function showNotification(message) {
       const existingNotification = document.getElementById("custom-notification");
@@ -634,26 +706,29 @@
       notification.id = "custom-notification";
       notification.style.position = "fixed";
       notification.style.bottom = "20px";
-      notification.style.right = "20px"; 
-      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") || message.includes("יש להשתמש") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)";
+      // Adjust for RTL: place on the left
+      notification.style.left = "20px";
+      notification.style.right = "auto";
+      notification.style.backgroundColor = message.toLowerCase().includes("שגיאה") || message.includes("עברת") || message.includes("לא ניתן") || message.includes("יש להשתמש") || message.includes("נכשל") ? "rgba(184, 50, 50, 0.9)" : "rgba(58, 140, 58, 0.9)";
       notification.style.color = "white";
       notification.style.padding = "15px 20px";
       notification.style.borderRadius = "8px";
       notification.style.boxShadow = "0 4px 20px rgba(0, 0, 0, 0.3)";
       notification.style.zIndex = "1000";
       notification.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+      // Adjust transform origin for left side appearance
       notification.style.transform = "translateY(100px)";
       notification.style.opacity = "0";
       notification.style.fontFamily = "'Rubik', sans-serif";
       notification.style.fontWeight = "500";
       notification.textContent = message;
       document.body.appendChild(notification);
-      
+
       setTimeout(() => {
         notification.style.transform = "translateY(0)";
         notification.style.opacity = "1";
       }, 10);
-      
+
       setTimeout(() => {
         notification.style.opacity = "0";
         notification.style.transform = "translateY(100px)";
@@ -662,25 +737,51 @@
             document.body.removeChild(notification);
           }
         }, 300);
-      }, 3000 + (message.length * 30)); 
+      }, 3000 + (message.length * 30)); // Duration based on message length
     }
 
     function confirmReset() {
       if (confirm("אתה בטוח שברצונך לאפס את כל הנתונים? פעולה זו אינה הפיכה.")) {
         localStorage.removeItem(usageKey);
-        updateUI();
-        renderChart();
+        // Need to explicitly reset chart and UI after clearing storage
+        if (weeklyChartInstance) {
+            weeklyChartInstance.destroy();
+            weeklyChartInstance = null; // Clear the instance variable
+        }
+        const legend = document.getElementById('customChartLegend');
+        if(legend) legend.innerHTML = ''; // Clear legend too
+
+        updateUI(); // Refresh summary, history list, button states
+        renderChart(); // Re-render the (now empty) chart
         showNotification("כל הנתונים אופסו בהצלחה");
       }
     }
 
+
     document.getElementById("yesBtn").onclick = () => addEntry("כן");
     document.getElementById("noBtn").onclick = () => addEntry("לא");
     document.getElementById("decideBtn").onclick = () => {
-      addEntry(canSmokeToday() ? (Math.random() < 0.5 ? "כן" : "לא") : "לא");
+        // Decide logic now also needs to respect the rules
+        const today = getToday();
+        const history = loadUsage();
+        const canSayYes = checkRulesForDate(today, "כן", history).valid;
+        let decision = "לא"; // Default to 'לא'
+
+        if (canSayYes) {
+            // Only consider 'כן' if rules allow it
+            decision = Math.random() < 0.5 ? "כן" : "לא";
+        } else {
+           // If rules prevent 'כן', the decision must be 'לא'
+           decision = "לא";
+           showNotification("המערכת בחרה 'לא' עקב חריגה מהכללים.");
+        }
+        addEntry(decision); // Add the determined entry
     };
 
+
+    // Initial load
     updateUI();
     renderChart();
-  </script></body>
+  </script>
+</body>
 </html>
