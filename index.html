@@ -322,17 +322,15 @@
     }
 
     function getWeekStart(dateStr) {
-      // Calculate the start of the week (Tuesday) based on a given date
+      // Calculate the start of the week, defined as TUESDAY, for a given date.
       const date = new Date(dateStr);
-      const day = date.getDay(); // Sunday = 0, Monday = 1, ..., Saturday = 6
-      // Adjust difference to make Tuesday (day=2) the start of the week
-      // (2 + 5) % 7 = 0
-      // (3 + 5) % 7 = 1 (Wednesday needs to go back 1 day)
-      // (1 + 5) % 7 = 6 (Monday needs to go back 6 days)
+      const day = date.getDay(); // Sunday = 0, Monday = 1, Tuesday = 2, ..., Saturday = 6
+      // Calculate the difference to get back to the previous Tuesday.
+      // (day + 5) % 7 ensures Tuesday (2) maps to 0 diff, Wednesday (3) maps to 1 diff, etc.
       const diff = (day + 5) % 7;
       date.setDate(date.getDate() - diff);
-      date.setHours(0, 0, 0, 0); // Normalize time
-      return date.toISOString().split("T")[0];
+      date.setHours(0, 0, 0, 0); // Normalize time to the start of the day
+      return date.toISOString().split("T")[0]; // Return YYYY-MM-DD
     }
 
 
@@ -362,15 +360,16 @@
     }
 
     function getCurrentWeek(history, todayStr) {
-      // Generate data structure for the current week (Tue-Mon)
-      const startStr = getWeekStart(todayStr);
+      // Generate data structure for the current week (Tuesday to Monday).
+      const startStr = getWeekStart(todayStr); // Get the Tuesday start date
       const startDate = new Date(startStr);
       const todayDate = new Date(todayStr);
       todayDate.setHours(0, 0, 0, 0);
 
+      // Create an array representing the 7 days of the week
       return Array.from({ length: 7 }, (_, i) => {
         const date = new Date(startDate);
-        date.setDate(startDate.getDate() + i);
+        date.setDate(startDate.getDate() + i); // Increment day (0=Tue, 1=Wed, ..., 6=Mon)
         date.setHours(0, 0, 0, 0);
         const dateStrLoop = date.toISOString().split("T")[0];
 
@@ -382,29 +381,30 @@
         // Default to 'לא' (auto) only for past/present days without a manual entry
         return entry || {
           date: dateStrLoop,
-          result: isPastOrToday ? "לא" : null, // null for future days
+          result: isPastOrToday ? "לא" : null, // null indicates future day (not displayed in list/chart)
           auto: isPastOrToday // auto is true only for default past/today entries
         };
-      }).filter(e => e.result !== null); // Filter out future days completely for display lists
+      }).filter(e => e.result !== null); // Filter out future days that have null result
     }
 
     function updateUI() {
         const today = getToday();
         const history = loadUsage(); // Load the raw history
-        const thisWeekData = getCurrentWeek(history, today); // Get week structure with defaults
+        // Get week data (Tue-Mon), filtered to exclude future days
+        const thisWeekData = getCurrentWeek(history, today);
 
         // --- Calculate Summary ---
         const weekStartStr = getWeekStart(today);
         const weekStartDate = new Date(weekStartStr);
         let totalYes = 0;
-        // Iterate through the week's dates up to today
+        // Iterate through the actual week dates (Tue-Mon) up to today
         for (let i = 0; i < 7; i++) {
             const d = new Date(weekStartDate);
             d.setDate(weekStartDate.getDate() + i);
             const currentDayInWeekStr = d.toISOString().split("T")[0];
             if (currentDayInWeekStr > today) continue; // Skip future days
 
-            // Check the raw history for a non-auto 'yes' entry
+            // Check the raw history for a non-auto 'yes' entry on this day
             const entryInHistory = history.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
             if (entryInHistory) {
                 totalYes++;
@@ -432,13 +432,14 @@
             todayCard.style.animation = 'none';
         }
 
-        // --- Populate History List (Reversed) ---
+        // --- Populate History List (Reversed Order: Mon -> Tue) ---
         const historyList = document.getElementById("historyList");
         historyList.innerHTML = ''; // Clear previous list
 
-        // Reverse the week data for display order (latest day first)
+        // Reverse the week data array so Monday appears first in the loop
         const reversedWeekData = thisWeekData.slice().reverse();
 
+        // Iterate over the REVERSED array (Mon, Sun, Sat, ..., Tue)
         reversedWeekData.forEach(entry => {
             const div = document.createElement("div");
             div.classList.add("history-item");
@@ -480,6 +481,7 @@
             // Create the text element for the history item
             const dateResult = document.createElement("div");
             const dayName = new Date(entry.date).toLocaleDateString('he-IL', { weekday: 'long' });
+            // Display day name, date, and the determined text
             dateResult.innerText = `${dayName} (${formatDate(entry.date)}): ${displayText}`;
 
             // Apply dimming style if it's an auto entry or today's placeholder
@@ -510,7 +512,8 @@
                 btnContainer.appendChild(noBtnPast);
                 div.appendChild(btnContainer); // Append buttons container to the history item
             }
-            // Append the completed history item div to the list
+            // Append the completed history item div to the list.
+            // Since we iterate Mon->Tue, Monday appears at the top, Tuesday at the bottom.
             historyList.appendChild(div);
         });
 
@@ -534,15 +537,15 @@
         const potentialHistoryWithNewYes = [...historyExcludingTargetDay, { date: dateToCheckStr, result: "כן", auto: false }];
 
         // --- Rule 1: Weekly Limit (Max 4 'Yes' per Tue-Mon week) ---
-        const weekStartStr = getWeekStart(dateToCheckStr);
+        const weekStartStr = getWeekStart(dateToCheckStr); // Get Tuesday start for the week of the date being checked
         const weekStartDate = new Date(weekStartStr);
         let yesInWeekCount = 0;
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 7; i++) { // Check all 7 days of that week (Tue to Mon)
             const d = new Date(weekStartDate);
             d.setDate(weekStartDate.getDate() + i);
             const currentDayInWeekStr = d.toISOString().split("T")[0];
 
-            // Check the *potential* history for 'yes' count within the week
+            // Check the *potential* history for 'yes' count within the calculated week
             const entryInPotentialHistory = potentialHistoryWithNewYes.find(e => e.date === currentDayInWeekStr && !e.auto && e.result === "כן");
             if (entryInPotentialHistory) {
                 yesInWeekCount++;
@@ -555,7 +558,6 @@
 
         // --- Rule 2: Consecutive Days (Block 3rd consecutive 'Yes') ---
         // Check if the two preceding days were *already* marked as 'yes' (non-auto) in the *existing* history.
-        // Adding 'yes' today would make it the third in a row.
         const targetDate = new Date(dateToCheckStr);
 
         const prevDate = new Date(targetDate);
@@ -686,7 +688,8 @@
 
         const history = loadUsage();
         // Get data for the current week (Tue-Mon), including defaults for past/present
-        const startOfWeek = getWeekStart(today);
+        const startOfWeek = getWeekStart(today); // Get Tuesday start
+        // Create the array representing Tue, Wed, ..., Mon
         const weekData = Array.from({ length: 7 }, (_, i) => {
             const date = new Date(startOfWeek);
             date.setDate(date.getDate() + i);
@@ -706,18 +709,17 @@
             return finalEntry;
         });
 
-        // Prepare labels (short day names) and data points for the chart
-        const labels = weekData.map(entry => new Date(entry.date).toLocaleDateString('he-IL', { weekday: 'short' }));
+        // Prepare labels (short day names Tue -> Mon) and data points for the chart
+        const labels = weekData.map(entry => entry.result !== null ? new Date(entry.date).toLocaleDateString('he-IL', { weekday: 'short' }) : ''); // Use '' for future labels
         const data = [];
 
         for (const entry of weekData) {
             const entryDate = new Date(entry.date);
             entryDate.setHours(0, 0, 0, 0);
 
-            if (entryDate > todayDateObj || entry.result === null) {
-                data.push(null); // Future days are blank bars
-            } else {
-                // Assign value, color, and tooltip text based on result and auto status
+            // Only push data for days up to today (result is not null)
+            if (entry.result !== null) {
+                 // Assign value, color, and tooltip text based on result and auto status
                 if (entry.result === "כן") { // Manual 'Yes'
                     data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
                 } else if (entry.result === "לא" && !entry.auto) { // Manual 'No'
@@ -725,6 +727,8 @@
                 } else { // Automatic 'No' (default for past/today with no manual entry)
                     data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
                 }
+            } else {
+                data.push(null); // Push null for future days to render blank bars
             }
         }
 
@@ -733,11 +737,11 @@
         weeklyChartInstance = new Chart(ctx, {
             type: "bar",
             data: {
-                labels,
+                labels, // Should be [Tue, Wed, ..., Mon]
                 datasets: [{
                     data: data.map(d => d ? d.value : null), // Use 1 for value, null for blank
-                    backgroundColor: data.map(d => d ? d.color : 'rgba(0,0,0,0)'),
-                    borderColor: data.map(d => d ? d.borderColor : 'rgba(0,0,0,0)'),
+                    backgroundColor: data.map(d => d ? d.color : 'rgba(0,0,0,0)'), // Transparent for null
+                    borderColor: data.map(d => d ? d.borderColor : 'rgba(0,0,0,0)'), // Transparent for null
                     borderWidth: 1,
                     barPercentage: 0.5, // Adjust bar width
                     categoryPercentage: 0.9 // Adjust spacing between bars
@@ -753,9 +757,11 @@
                             // Customize tooltip title
                             title: (tooltipItems) => {
                                 const dayIndex = tooltipItems[0].dataIndex;
+                                // Ensure weekData[dayIndex] exists before accessing its properties
+                                if (!weekData[dayIndex]) return '';
                                 const entryDate = weekData[dayIndex].date;
                                 const fullDayName = new Date(entryDate).toLocaleDateString('he-IL', { weekday: 'long' });
-                                // Show result (if available), day name, and date
+                                // Show result (if available via 'data' array), day name, and date
                                 return data[dayIndex] ? `${data[dayIndex].actualResult} - ${fullDayName} (${formatDate(entryDate)})` : `${fullDayName} (${formatDate(entryDate)})`;
                             },
                             // Remove default label body
