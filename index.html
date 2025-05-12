@@ -454,12 +454,12 @@
               const yesBtnPast = document.createElement("button");
               yesBtnPast.innerText = "כן";
               yesBtnPast.classList.add("btn-yes");
-              yesBtnPast.onclick = () => updatePastDay(entry.date, "כן");
+              yesBtnPast.onclick = () => updatePastDay(entry.date, "✅ כן");
 
               const noBtnPast = document.createElement("button");
               noBtnPast.innerText = "לא";
               noBtnPast.classList.add("btn-no");
-              noBtnPast.onclick = () => updatePastDay(entry.date, "לא");
+              noBtnPast.onclick = () => updatePastDay(entry.date, "❌ לא");
 
               btnContainer.appendChild(yesBtnPast);
               btnContainer.appendChild(noBtnPast);
@@ -652,7 +652,7 @@
               if (entry.result === "כן") {
                   data.push({ value: 1, actualResult: "כן", color: "rgba(58, 140, 58, 0.7)", borderColor: "rgba(58, 140, 58, 1)"});
               } else if (entry.result === "לא" && !entry.auto) {
-                  data.push({ value: 1, actualResult: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
+                  data.push({ value: 1, actualResult: "לא", color: "rgba(184, 50, 50, 0.7)", borderColor: "rgba(184, 50, 50, 1)"});
               } else { // Default 'לא' (auto) for past days without manual entry
                   data.push({ value: 1, actualResult: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)", borderColor: "rgba(112, 112, 112, 0.8)"});
               }
@@ -723,7 +723,7 @@
 
       const legendItems = [
         { label: "כן", color: "rgba(58, 140, 58, 0.7)" },
-        { label: "לא (ידני)", color: "rgba(184, 50, 50, 0.7)" },
+        { label: "לא", color: "rgba(184, 50, 50, 0.7)" },
         { label: "אוטומטי (לא)", color: "rgba(112, 112, 112, 0.5)" }
       ];
 
@@ -808,8 +808,8 @@
     }
 
 
-    document.getElementById("yesBtn").onclick = () => addEntry("כן");
-    document.getElementById("noBtn").onclick = () => addEntry("לא");
+    document.getElementById("yesBtn").onclick = () => addEntry("✅ כן");
+    document.getElementById("noBtn").onclick = () => addEntry("❌ לא");
     document.getElementById("decideBtn").onclick = () => {
         // Decide logic now also needs to respect the rules
         const today = getToday();
