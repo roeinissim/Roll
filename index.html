@@ -304,13 +304,20 @@
       return `${day}.${month}`;
     }
 
-    function getWeekStart(dateStr) {
-      const date = new Date(dateStr);
-      const day = date.getDay();
-      const diff = (day + 5) % 7; // Adjust to make Tuesday the start (Tuesday = 2, so (2+5)%7 = 0)
-      date.setDate(date.getDate() - diff);
-      return date.toISOString().split("T")[0];
-    }
+function getWeekStart(dateStr) {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+
+  // שבוע רגיל: ראשון עד שבת
+  const dayOfWeek = date.getDay(); // ראשון = 0
+  date.setDate(date.getDate() - dayOfWeek);
+
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+
+  return `${y}-${m}-${d}`;
+}
 
 
     function loadUsage() {
